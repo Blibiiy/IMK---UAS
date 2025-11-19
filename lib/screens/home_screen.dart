@@ -5,6 +5,7 @@ import '../providers/project_provider.dart';
 import 'project_detail_screen.dart';
 import 'chat_list_screen.dart';
 import 'profile_screen.dart';
+import '../theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,90 +19,66 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onBottomNavTap(int index) {
     if (index == 1) {
-      // Navigate to Chat
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ChatListScreen()),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatListScreen()));
     } else if (index == 2) {
-      // Navigate to Profile
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ProfileScreen()),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
     } else {
-      setState(() {
-        _currentIndex = index;
-      });
+      setState(() => _currentIndex = index);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 50),
-              // Student Header Card
-              const StudentHeaderCard(
+        child: Column(
+          children: [
+            // Header dengan gradient
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
+              decoration: AppTheme.headerDecoration(cs),
+              child: const StudentHeaderCard(
                 name: 'Muhammad Isra Al Fattah',
                 program: 'Prodi Informatika (S1)',
                 imageUrl: 'https://placehold.co/100x100/E0E0E0/E0E0E0',
               ),
-              const SizedBox(height: 20),
-              // Filter Button
-              PopupMenuButton<String>(
-                onSelected: (String value) {
-                  // Handle filter selection
-                  // You can implement filter logic here
-                },
-                itemBuilder: (BuildContext context) => [
-                  const PopupMenuItem<String>(
-                    value: 'Tersedia',
-                    child: Text('Tersedia'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'Diproses',
-                    child: Text('Diproses'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'Diterima',
-                    child: Text('Diterima'),
-                  ),
-                ],
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Filter',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.filter_list, size: 20),
-                    ],
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: PopupMenuButton<String>(
+                  onSelected: (_) {},
+                  itemBuilder: (BuildContext context) => const [
+                    PopupMenuItem<String>(value: 'Tersedia', child: Text('Tersedia')),
+                    PopupMenuItem<String>(value: 'Diproses', child: Text('Diproses')),
+                    PopupMenuItem<String>(value: 'Diterima', child: Text('Diterima')),
+                  ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      color: cs.secondaryContainer,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Filter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.onSecondaryContainer)),
+                        const SizedBox(width: 8),
+                        Icon(Icons.filter_list, size: 20, color: cs.onSecondaryContainer),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Projects List
-              Consumer<ProjectProvider>(
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Consumer<ProjectProvider>(
                 builder: (context, projectProvider, child) {
                   return ListView.builder(
                     shrinkWrap: true,
@@ -124,54 +101,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFFE0E0E0),
         currentIndex: _currentIndex,
         onTap: _onBottomNavTap,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
         items: [
           BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/homeactive.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
-            ),
+            icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 24, height: 24),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/chat.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
-            ),
+            icon: SvgPicture.asset('assets/logos/chat.svg', width: 24, height: 24),
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/profileinactive.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
-            ),
+            icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 24, height: 24),
             label: 'Profile',
           ),
         ],
@@ -180,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Student Header Card Component
 class StudentHeaderCard extends StatelessWidget {
   final String name;
   final String program;
@@ -195,11 +142,13 @@ class StudentHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
+        color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.25)),
       ),
       child: Row(
         children: [
@@ -211,15 +160,16 @@ class StudentHeaderCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: cs.onPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   program,
-                  style: const TextStyle(fontSize: 14, color: Colors.black87),
+                  style: TextStyle(fontSize: 14, color: cs.onPrimary.withOpacity(0.9)),
                 ),
               ],
             ),
@@ -230,7 +180,6 @@ class StudentHeaderCard extends StatelessWidget {
   }
 }
 
-// Project Card Component
 class ProjectCard extends StatelessWidget {
   final String projectId;
   final String title;
@@ -251,59 +200,39 @@ class ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProjectDetailScreen(projectId: projectId),
-          ),
-        );
-      },
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProjectDetailScreen(projectId: projectId))),
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: cs.surfaceVariant,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title and Status Tag
+            // Title and status tag
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: cs.onSurface)),
                 StatusTag(status: status),
               ],
             ),
             const SizedBox(height: 8),
-            // Description
             Text(
               description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
-            // Deadline and Participants
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Deadline: $deadline',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                Text(
-                  'Partisipan: $participants',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+                Text('Deadline: $deadline', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                Text('Partisipan: $participants', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
               ],
             ),
           ],
@@ -313,27 +242,26 @@ class ProjectCard extends StatelessWidget {
   }
 }
 
-// Status Tag Component
 class StatusTag extends StatelessWidget {
   final String status;
-
   const StatusTag({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isOpen = status.toLowerCase().contains('tersedia') || status.toLowerCase().contains('pendaftaran');
+    final bg = isOpen ? cs.primary : cs.outline;
+    final fg = isOpen ? cs.onPrimary : cs.onSurface;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         status,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
+        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700),
       ),
     );
   }

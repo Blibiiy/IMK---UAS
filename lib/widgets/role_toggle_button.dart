@@ -12,6 +12,7 @@ class RoleToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return SegmentedButton<String>(
       segments: const [
         ButtonSegment<String>(value: 'Mahasiswa', label: Text('Mahasiswa')),
@@ -22,25 +23,17 @@ class RoleToggleButton extends StatelessWidget {
         onRoleChanged(newSelection.first);
       },
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.resolveWith<Color>((
-          Set<WidgetState> states,
-        ) {
-          if (states.contains(WidgetState.selected)) {
-            return Colors.black;
-          }
-          return Colors.white;
+        side: WidgetStateProperty.all(BorderSide(color: cs.outline)),
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected)
+              ? cs.primaryContainer
+              : cs.surface;
         }),
-        foregroundColor: WidgetStateProperty.resolveWith<Color>((
-          Set<WidgetState> states,
-        ) {
-          if (states.contains(WidgetState.selected)) {
-            return Colors.white;
-          }
-          return Colors.black;
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected)
+              ? cs.onPrimaryContainer
+              : cs.onSurface;
         }),
-        side: WidgetStateProperty.all(
-          const BorderSide(color: Colors.black, width: 2),
-        ),
       ),
     );
   }
