@@ -17,6 +17,15 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   int _currentIndex = 2; // Profile tab is selected
 
+  @override
+  void initState() {
+    super.initState();
+    // Load portfolios from Supabase when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PortfolioProvider>().loadPortfolios();
+    });
+  }
+
   void _onBottomNavTap(int index) {
     if (index == 0) {
       // Navigate to Home

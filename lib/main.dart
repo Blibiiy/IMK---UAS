@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'providers/project_provider.dart';
 import 'providers/portfolio_provider.dart';
+import 'config/supabase_config.dart';
 
 import 'theme/app_theme.dart';
 
@@ -28,7 +30,21 @@ import 'screens/portfolio_detail_screen.dart';
 import 'screens/portfolio_form_screen.dart';
 import 'screens/student_profile_detail_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Supabase
+  try {
+    await Supabase.initialize(
+      url: SupabaseConfig.supabaseUrl,
+      anonKey: SupabaseConfig.supabaseAnonKey,
+    );
+    print('✅ Supabase initialized successfully');
+  } catch (e) {
+    print('⚠️ Supabase initialization failed: $e');
+    print('⚠️ Aplikasi akan menggunakan data dummy');
+  }
+
   runApp(const MyApp());
 }
 

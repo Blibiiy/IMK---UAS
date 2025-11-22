@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 // Reuse model PortfolioItem dari provider portfolio
 import './portfolio_provider.dart';
+import '../services/supabase_service.dart';
 
 enum ProjectStatus { tersedia, diproses, diterima }
 
@@ -108,10 +109,70 @@ class Project {
       applicants: applicants ?? this.applicants,
     );
   }
+
+  // Convert from Supabase JSON to Project object
+  factory Project.fromJson(Map<String, dynamic> json) {
+    ProjectStatus status = ProjectStatus.tersedia;
+    if (json['status'] == 'diproses') {
+      status = ProjectStatus.diproses;
+    } else if (json['status'] == 'diterima') {
+      status = ProjectStatus.diterima;
+    }
+
+    return Project(
+      id: json['id'].toString(),
+      title: json['title'] ?? '',
+      supervisor: json['supervisor'] ?? '',
+      description: json['description'] ?? '',
+      deadline: json['deadline'] ?? '',
+      participants: json['participants'] ?? '',
+      requirements: json['requirements'] != null
+          ? List<String>.from(json['requirements'])
+          : [],
+      benefits: json['benefits'] != null
+          ? List<String>.from(json['benefits'])
+          : [],
+      postedAt: json['posted_at'] != null
+          ? DateTime.parse(json['posted_at'])
+          : DateTime.now(),
+      editedAt: json['edited_at'] != null
+          ? DateTime.parse(json['edited_at'])
+          : null,
+      status: status,
+      members: [], // Will be loaded separately if needed
+      applicants: [], // Will be loaded separately if needed
+    );
+  }
+
+  // Convert Project to JSON for Supabase
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'supervisor': supervisor,
+      'description': description,
+      'deadline': deadline,
+      'participants': participants,
+      'requirements': requirements,
+      'benefits': benefits,
+      'posted_at': postedAt.toIso8601String(),
+      'edited_at': editedAt?.toIso8601String(),
+      'status': statusText.toLowerCase(),
+    };
+  }
 }
 
 class ProjectProvider extends ChangeNotifier {
-  final List<Project> _projects = [
+  final SupabaseService _supabaseService = SupabaseService();
+  List<Project> _projects = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  // Data dummy untuk fallback (jika Supabase belum disetup)
+  final List<Project> _dummyProjects = [
     Project(
       id: '1',
       title: 'Project 1',
@@ -146,13 +207,8 @@ class ProjectProvider extends ChangeNotifier {
               deadline: '10 Oktober 2025',
               description:
                   'Project riset pendeteksian plat nomor berbasis visi komputer.',
-              requirements: [
-                'Python',
-                'OpenCV',
-              ],
-              benefits: [
-                'Publikasi',
-              ],
+              requirements: ['Python', 'OpenCV'],
+              benefits: ['Publikasi'],
             ),
             CertificatePortfolio(
               id: 'c_isra_1',
@@ -210,7 +266,8 @@ class ProjectProvider extends ChangeNotifier {
       id: '2',
       title: 'Project 2',
       supervisor: 'Dosen Pembimbing: Pak Budi',
-      description: 'Project Lorem Ipsum Project Lorem Ipsum Project Lorem Ipsum',
+      description:
+          'Project Lorem Ipsum Project Lorem Ipsum Project Lorem Ipsum',
       deadline: '10 Oktober 2025',
       participants: '10',
       status: ProjectStatus.diproses,
@@ -227,7 +284,8 @@ class ProjectProvider extends ChangeNotifier {
       id: '3',
       title: 'Project 3',
       supervisor: 'Dosen Pembimbing: Bu Ani',
-      description: 'Project Lorem Ipsum Project Lorem Ipsum Project Lorem Ipsum',
+      description:
+          'Project Lorem Ipsum Project Lorem Ipsum Project Lorem Ipsum',
       deadline: '10 Oktober 2025',
       participants: '10',
       status: ProjectStatus.tersedia,
@@ -244,6 +302,26 @@ class ProjectProvider extends ChangeNotifier {
 
   List<Project> get projects => _projects;
 
+  // Initialize and load projects from Supabase
+  Future<void> loadProjects() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final data = await _supabaseService.getAllProjects();
+      _projects = data.map((json) => Project.fromJson(json)).toList();
+    } catch (e) {
+      _errorMessage = 'Gagal memuat projects: $e';
+      print(_errorMessage);
+      // Fallback ke dummy data jika Supabase belum disetup
+      _projects = _dummyProjects;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Project? getProjectById(String id) {
     try {
       return _projects.firstWhere((p) => p.id == id);
@@ -252,72 +330,119 @@ class ProjectProvider extends ChangeNotifier {
     }
   }
 
-  void registerProject(String projectId) {
-    final idx = _projects.indexWhere((p) => p.id == projectId);
-    if (idx != -1) {
-      final old = _projects[idx];
-      _projects[idx] = old.copyWith(status: ProjectStatus.diproses);
-      notifyListeners();
+  Future<void> registerProject(String projectId) async {
+    try {
+      await _supabaseService.updateProjectStatus(
+        id: projectId,
+        status: 'diproses',
+      );
+
+      final idx = _projects.indexWhere((p) => p.id == projectId);
+      if (idx != -1) {
+        final old = _projects[idx];
+        _projects[idx] = old.copyWith(status: ProjectStatus.diproses);
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = 'Gagal mendaftar project: $e';
+      print(_errorMessage);
+      rethrow;
     }
   }
 
-  void closeRegistration(String projectId) {
-    final idx = _projects.indexWhere((p) => p.id == projectId);
-    if (idx != -1) {
-      final old = _projects[idx];
-      final newStatus =
-          old.status == ProjectStatus.tersedia ? ProjectStatus.diproses : old.status;
-      _projects[idx] = old.copyWith(status: newStatus);
-      notifyListeners();
+  Future<void> closeRegistration(String projectId) async {
+    try {
+      await _supabaseService.closeRegistration(projectId);
+
+      final idx = _projects.indexWhere((p) => p.id == projectId);
+      if (idx != -1) {
+        final old = _projects[idx];
+        final newStatus = old.status == ProjectStatus.tersedia
+            ? ProjectStatus.diproses
+            : old.status;
+        _projects[idx] = old.copyWith(status: newStatus);
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = 'Gagal menutup pendaftaran: $e';
+      print(_errorMessage);
+      rethrow;
     }
   }
 
-  void addProject({
+  Future<void> addProject({
     required String title,
     required String deadline,
     required String participants,
     required String description,
     required List<String> requirements,
     String lecturerFullName = 'Muhammad Isra Alfattah',
-  }) {
-    final newProject = Project(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      supervisor: 'Dosen Pembimbing: $lecturerFullName',
-      description: description,
-      deadline: deadline,
-      participants: participants,
-      requirements: requirements,
-      benefits: const [],
-      postedAt: DateTime.now(),
-      status: ProjectStatus.tersedia,
-      members: [],
-      applicants: [],
-    );
-    _projects.insert(0, newProject);
-    notifyListeners();
+  }) async {
+    try {
+      final response = await _supabaseService.addProject(
+        title: title,
+        supervisor: 'Dosen Pembimbing: $lecturerFullName',
+        description: description,
+        deadline: deadline,
+        participants: participants,
+        requirements: requirements,
+        benefits: [],
+      );
+
+      if (response != null) {
+        final newProject = Project.fromJson(response);
+        _projects.insert(0, newProject);
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = 'Gagal menambahkan project: $e';
+      print(_errorMessage);
+      rethrow;
+    }
   }
 
-  void updateProject({
+  Future<void> updateProject({
     required String id,
     String? title,
     String? deadline,
     String? participants,
     String? description,
     List<String>? requirements,
-  }) {
-    final idx = _projects.indexWhere((p) => p.id == id);
-    if (idx == -1) return;
-    final old = _projects[idx];
-    _projects[idx] = old.copyWith(
-      title: title,
-      deadline: deadline,
-      participants: participants,
-      description: description,
-      requirements: requirements,
-      editedAt: DateTime.now(),
-    );
-    notifyListeners();
+  }) async {
+    try {
+      final response = await _supabaseService.updateProject(
+        id: id,
+        title: title,
+        deadline: deadline,
+        participants: participants,
+        description: description,
+        requirements: requirements,
+      );
+
+      if (response != null) {
+        final idx = _projects.indexWhere((p) => p.id == id);
+        if (idx != -1) {
+          _projects[idx] = Project.fromJson(response);
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      _errorMessage = 'Gagal mengupdate project: $e';
+      print(_errorMessage);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteProject(String id) async {
+    try {
+      await _supabaseService.deleteProject(id);
+      _projects.removeWhere((p) => p.id == id);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Gagal menghapus project: $e';
+      print(_errorMessage);
+      rethrow;
+    }
   }
 
   // ====== Applicants & Members ======
@@ -326,8 +451,9 @@ class ProjectProvider extends ChangeNotifier {
     if (idx == -1) return;
     final project = _projects[idx];
 
-    final applicantIndex =
-        project.applicants.indexWhere((student) => student.id == studentId);
+    final applicantIndex = project.applicants.indexWhere(
+      (student) => student.id == studentId,
+    );
     if (applicantIndex == -1) return;
 
     final student = project.applicants[applicantIndex];
@@ -348,8 +474,9 @@ class ProjectProvider extends ChangeNotifier {
     if (idx == -1) return;
     final project = _projects[idx];
 
-    final updatedApplicants =
-        project.applicants.where((s) => s.id != studentId).toList();
+    final updatedApplicants = project.applicants
+        .where((s) => s.id != studentId)
+        .toList();
 
     _projects[idx] = project.copyWith(
       applicants: updatedApplicants,

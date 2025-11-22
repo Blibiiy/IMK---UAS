@@ -12,7 +12,8 @@ class LecturerEditProjectScreen extends StatefulWidget {
   const LecturerEditProjectScreen({super.key, required this.projectId});
 
   @override
-  State<LecturerEditProjectScreen> createState() => _LecturerEditProjectScreenState();
+  State<LecturerEditProjectScreen> createState() =>
+      _LecturerEditProjectScreenState();
 }
 
 class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
@@ -21,8 +22,8 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
   final _titleController = TextEditingController();
   final _deadlineController = TextEditingController();
   final _participantsController = TextEditingController();
-  final _requirementsController = TextEditingController();
   final _descriptionController = TextEditingController();
+  List<String> _requirements = [];
 
   Project? _project;
 
@@ -35,7 +36,7 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
       _titleController.text = _project!.title;
       _deadlineController.text = _project!.deadline;
       _participantsController.text = _project!.participants;
-      _requirementsController.text = _project!.requirements.join('\n');
+      _requirements = List.from(_project!.requirements);
       _descriptionController.text = _project!.description;
     }
   }
@@ -45,7 +46,6 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
     _titleController.dispose();
     _deadlineController.dispose();
     _participantsController.dispose();
-    _requirementsController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -70,9 +70,11 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
   }) {
     return InputDecoration(
       hintText: hintText,
+      // Placeholder dengan warna lebih transparan
       hintStyle: TextStyle(
-        color: Colors.grey[600],
-        fontWeight: FontWeight.w400,
+        color: Colors.grey[400],
+        fontWeight: FontWeight.w300,
+        fontSize: 14,
       ),
       filled: true,
       fillColor: Colors.white,
@@ -104,29 +106,58 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
     );
   }
 
-  List<String> _requirementsToList(String raw) {
-    return raw
-        .split('\n')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-  }
-
-  void _onUpdate() {
+  Future<void> _onUpdate() async {
     if (!_formKey.currentState!.validate()) return;
-    context.read<ProjectProvider>().updateProject(
-          id: widget.projectId,
-          title: _titleController.text.trim(),
-          deadline: _deadlineController.text.trim(),
-          participants: _participantsController.text.trim(),
-          description: _descriptionController.text.trim(),
-          requirements: _requirementsToList(_requirementsController.text),
-        );
+    if (_requirements.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tambahkan minimal 1 persyaratan project'),
+        ),
+      );
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Project berhasil diperbarui.')),
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
-    Navigator.pop(context); // kembali ke detail, data otomatis ter-update via provider
+
+    try {
+      await context.read<ProjectProvider>().updateProject(
+        id: widget.projectId,
+        title: _titleController.text.trim(),
+        deadline: _deadlineController.text.trim(),
+        participants: _participantsController.text.trim(),
+        description: _descriptionController.text.trim(),
+        requirements: _requirements,
+      );
+
+      // Close loading
+      if (mounted) Navigator.of(context).pop();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Project berhasil diperbarui.')),
+        );
+        Navigator.pop(context); // kembali ke detail
+      }
+    } catch (e) {
+      // Close loading
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengupdate project: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -155,7 +186,11 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
               children: [
                 // Back
                 IconButton(
-                  icon: SvgPicture.asset('assets/logos/back.svg', width: 24, height: 24),
+                  icon: SvgPicture.asset(
+                    'assets/logos/back.svg',
+                    width: 24,
+                    height: 24,
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
                 const SizedBox(height: 8),
@@ -166,62 +201,103 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
                 const SizedBox(height: 24),
 
                 // Nama Project
+                const Text(
+                  'Nama Project',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _titleController,
-                  decoration: _outlineInputDecoration(hintText: 'Nama Project'),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Nama project wajib diisi' : null,
+                  decoration: _outlineInputDecoration(
+                    hintText: 'Contoh: Aplikasi Pendeteksi Plat Nomor',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Nama project wajib diisi'
+                      : null,
                 ),
                 const SizedBox(height: 16),
 
-                // Tanggal
+                // Tanggal Deadline
+                const Text(
+                  'Tanggal Deadline',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _deadlineController,
                   readOnly: true,
                   decoration: _outlineInputDecoration(
-                    hintText: 'Tanggal',
-                    suffixIcon: SvgPicture.asset('assets/logos/calendar.svg', width: 22, height: 22),
+                    hintText: 'Pilih Tanggal Deadline',
+                    suffixIcon: SvgPicture.asset(
+                      'assets/logos/calendar.svg',
+                      width: 22,
+                      height: 22,
+                    ),
                   ),
                   onTap: _pickDeadline,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Tanggal wajib dipilih' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Tanggal wajib dipilih'
+                      : null,
                 ),
                 const SizedBox(height: 16),
 
                 // Jumlah Partisipan
+                const Text(
+                  'Jumlah Partisipan',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _participantsController,
                   decoration: _outlineInputDecoration(
-                    hintText: 'Jumlah Partisipan',
+                    hintText: 'Contoh: 5',
                     suffixText: 'Partisipan',
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Jumlah partisipan wajib diisi';
+                    if (v == null || v.trim().isEmpty)
+                      return 'Jumlah partisipan wajib diisi';
                     final n = int.tryParse(v.trim());
-                    if (n == null || n <= 0) return 'Jumlah partisipan harus angka > 0';
+                    if (n == null || n <= 0)
+                      return 'Jumlah partisipan harus angka > 0';
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
 
                 // Persyaratan Project
-                TextFormField(
-                  controller: _requirementsController,
-                  maxLines: 6,
-                  decoration: _outlineInputDecoration(hintText: 'Persyaratan Project...'),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Persyaratan project wajib diisi' : null,
+                const Text(
+                  'Persyaratan Project',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                RequirementInputChipField(
+                  requirements: _requirements,
+                  onRequirementsChanged: (requirements) {
+                    setState(() {
+                      _requirements = requirements;
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
 
                 // Detail Project
+                const Text(
+                  'Detail Project',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _descriptionController,
                   maxLines: 10,
-                  decoration: _outlineInputDecoration(hintText: 'Detail Project...'),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Detail project wajib diisi' : null,
+                  decoration: _outlineInputDecoration(
+                    hintText:
+                        'Contoh: Project ini bertujuan untuk mengembangkan aplikasi mobile yang dapat mendeteksi dan membaca plat nomor kendaraan secara otomatis menggunakan teknologi computer vision...',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Detail project wajib diisi'
+                      : null,
                 ),
                 const SizedBox(height: 28),
 
@@ -236,7 +312,10 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text(
                       'Update',
@@ -250,6 +329,119 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Custom RequirementInputChipField Component
+class RequirementInputChipField extends StatefulWidget {
+  final List<String> requirements;
+  final Function(List<String>) onRequirementsChanged;
+
+  const RequirementInputChipField({
+    super.key,
+    required this.requirements,
+    required this.onRequirementsChanged,
+  });
+
+  @override
+  State<RequirementInputChipField> createState() =>
+      _RequirementInputChipFieldState();
+}
+
+class _RequirementInputChipFieldState extends State<RequirementInputChipField> {
+  final TextEditingController _requirementController = TextEditingController();
+
+  @override
+  void dispose() {
+    _requirementController.dispose();
+    super.dispose();
+  }
+
+  void _addRequirement() {
+    if (_requirementController.text.isNotEmpty) {
+      final updatedRequirements = [
+        ...widget.requirements,
+        _requirementController.text,
+      ];
+      widget.onRequirementsChanged(updatedRequirements);
+      _requirementController.clear();
+    }
+  }
+
+  void _removeRequirement(int index) {
+    final updatedRequirements = [...widget.requirements];
+    updatedRequirements.removeAt(index);
+    widget.onRequirementsChanged(updatedRequirements);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Input field
+        TextField(
+          controller: _requirementController,
+          decoration: InputDecoration(
+            hintText: 'Contoh: Mampu bekerja dalam tim',
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontWeight: FontWeight.w300,
+              fontSize: 14,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            ),
+            suffixIcon: IconButton(
+              icon: SvgPicture.asset(
+                'assets/logos/addskills.svg',
+                width: 20,
+                height: 20,
+              ),
+              onPressed: _addRequirement,
+            ),
+          ),
+          onSubmitted: (_) => _addRequirement(),
+        ),
+        const SizedBox(height: 12),
+        // Chips display
+        if (widget.requirements.isNotEmpty)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.requirements.asMap().entries.map((entry) {
+              return Chip(
+                label: Text(entry.value),
+                deleteIcon: SvgPicture.asset(
+                  'assets/logos/close.svg',
+                  width: 16,
+                  height: 16,
+                ),
+                onDeleted: () => _removeRequirement(entry.key),
+                backgroundColor: const Color(0xFFE0E0E0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              );
+            }).toList(),
+          ),
+      ],
     );
   }
 }

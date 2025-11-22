@@ -88,48 +88,74 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
     }
   }
 
-  void _handleSubmit() {
+  Future<void> _handleSubmit() async {
     final provider = Provider.of<PortfolioProvider>(context, listen: false);
 
-    if (_selectedCategory == 'Sertifikat') {
-      final certificate = CertificatePortfolio(
-        id: isEditing
-            ? widget.existingItem!.id
-            : DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text,
-        issuer: _issuerController.text,
-        startDate: _startDateController.text,
-        endDate: _endDateController.text,
-        skills: _skills,
-        certificateFile: _certificateFile,
-      );
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
 
-      if (isEditing) {
-        provider.updatePortfolio(certificate);
-        Navigator.pop(context); // Back to detail
-        Navigator.pop(context); // Back to list
-      } else {
-        provider.addPortfolio(certificate);
-        Navigator.pop(context); // Back to list
+    try {
+      if (_selectedCategory == 'Sertifikat') {
+        final certificate = CertificatePortfolio(
+          id: isEditing
+              ? widget.existingItem!.id
+              : DateTime.now().millisecondsSinceEpoch.toString(),
+          title: _titleController.text,
+          issuer: _issuerController.text,
+          startDate: _startDateController.text,
+          endDate: _endDateController.text,
+          skills: _skills,
+          certificateFile: _certificateFile,
+        );
+
+        if (isEditing) {
+          await provider.updatePortfolio(certificate);
+          if (mounted) Navigator.pop(context); // Close loading
+          if (mounted) Navigator.pop(context); // Back to detail
+          if (mounted) Navigator.pop(context); // Back to list
+        } else {
+          await provider.addPortfolio(certificate);
+          if (mounted) Navigator.pop(context); // Close loading
+          if (mounted) Navigator.pop(context); // Back to list
+        }
+      } else if (_selectedCategory == 'Organisasi') {
+        final organization = OrganizationPortfolio(
+          id: isEditing
+              ? widget.existingItem!.id
+              : DateTime.now().millisecondsSinceEpoch.toString(),
+          title: _orgTitleController.text,
+          position: _positionController.text,
+          duration: _durationController.text,
+          description: _descriptionController.text,
+        );
+
+        if (isEditing) {
+          await provider.updatePortfolio(organization);
+          if (mounted) Navigator.pop(context); // Close loading
+          if (mounted) Navigator.pop(context); // Back to detail
+          if (mounted) Navigator.pop(context); // Back to list
+        } else {
+          await provider.addPortfolio(organization);
+          if (mounted) Navigator.pop(context); // Close loading
+          if (mounted) Navigator.pop(context); // Back to list
+        }
       }
-    } else if (_selectedCategory == 'Organisasi') {
-      final organization = OrganizationPortfolio(
-        id: isEditing
-            ? widget.existingItem!.id
-            : DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _orgTitleController.text,
-        position: _positionController.text,
-        duration: _durationController.text,
-        description: _descriptionController.text,
-      );
+    } catch (e) {
+      // Close loading
+      if (mounted) Navigator.pop(context);
 
-      if (isEditing) {
-        provider.updatePortfolio(organization);
-        Navigator.pop(context); // Back to detail
-        Navigator.pop(context); // Back to list
-      } else {
-        provider.addPortfolio(organization);
-        Navigator.pop(context); // Back to list
+      // Show error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan portfolio: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

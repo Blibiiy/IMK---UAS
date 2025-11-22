@@ -20,19 +20,37 @@ class LecturerHomeScreen extends StatefulWidget {
 class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    // Load projects from Supabase when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjectProvider>().loadProjects();
+    });
+  }
+
   void _onBottomNavTap(int index) {
     if (index == _currentIndex) return;
     if (index == 0) {
       setState(() => _currentIndex = 0);
     } else if (index == 1) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatListScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ChatListScreen()),
+      );
     } else if (index == 2) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LecturerProfileScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LecturerProfileScreen()),
+      );
     }
   }
 
   void _onAddProject() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const LecturerAddProjectScreen()));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LecturerAddProjectScreen()),
+    );
   }
 
   @override
@@ -49,9 +67,30 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
         currentIndex: _currentIndex,
         onTap: _onBottomNavTap,
         items: [
-          BottomNavigationBarItem(icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 24, height: 24), label: 'Home'),
-          BottomNavigationBarItem(icon: SvgPicture.asset('assets/logos/chat.svg', width: 24, height: 24), label: 'Chat'),
-          BottomNavigationBarItem(icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 24, height: 24), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/logos/homeactive.svg',
+              width: 24,
+              height: 24,
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/logos/chat.svg',
+              width: 24,
+              height: 24,
+            ),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/logos/profileinactive.svg',
+              width: 24,
+              height: 24,
+            ),
+            label: 'Profile',
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -73,7 +112,14 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Your Project', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: cs.onSurface)),
+                child: Text(
+                  'Your Project',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -85,7 +131,13 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                   if (projects.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 60),
-                      child: Text('Belum ada proyek', style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant)),
+                      child: Text(
+                        'Belum ada proyek',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
                     );
                   }
                   return ListView.builder(
@@ -94,7 +146,9 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                     itemCount: projects.length,
                     itemBuilder: (context, i) {
                       final p = projects[i];
-                      final tag = p.status == ProjectStatus.tersedia ? 'Pendaftaran' : 'Pendaftaran Ditutup';
+                      final tag = p.status == ProjectStatus.tersedia
+                          ? 'Pendaftaran'
+                          : 'Pendaftaran Ditutup';
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: _LecturerProjectCard(
@@ -148,9 +202,22 @@ class _LecturerHeaderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cs.onPrimary)),
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onPrimary,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(program, style: TextStyle(fontSize: 14, color: cs.onPrimary.withOpacity(0.9))),
+                Text(
+                  program,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onPrimary.withOpacity(0.9),
+                  ),
+                ),
               ],
             ),
           ),
@@ -181,27 +248,61 @@ class _LecturerProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LecturerProjectDetailScreen(projectId: projectId))),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LecturerProjectDetailScreen(projectId: projectId),
+        ),
+      ),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: cs.surfaceVariant, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: cs.surfaceVariant,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Expanded(
-                child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: cs.onSurface)),
-              ),
-              const SizedBox(width: 12),
-              StatusTag(status: tagLabel),
-            ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                StatusTag(status: tagLabel),
+              ],
+            ),
             const SizedBox(height: 8),
-            Text(description, maxLines: 3, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant)),
+            Text(
+              description,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+            ),
             const SizedBox(height: 12),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('Deadline: $deadline', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-              Text('Partisipan: $participants', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-            ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Deadline: $deadline',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+                Text(
+                  'Partisipan: $participants',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+              ],
+            ),
           ],
         ),
       ),

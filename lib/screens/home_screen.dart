@@ -17,11 +17,26 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    // Load projects from Supabase when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjectProvider>().loadProjects();
+    });
+  }
+
   void _onBottomNavTap(int index) {
     if (index == 1) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatListScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ChatListScreen()),
+      );
     } else if (index == 2) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+      );
     } else {
       setState(() => _currentIndex = index);
     }
@@ -53,12 +68,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: PopupMenuButton<String>(
                   onSelected: (_) {},
                   itemBuilder: (BuildContext context) => const [
-                    PopupMenuItem<String>(value: 'Tersedia', child: Text('Tersedia')),
-                    PopupMenuItem<String>(value: 'Diproses', child: Text('Diproses')),
-                    PopupMenuItem<String>(value: 'Diterima', child: Text('Diterima')),
+                    PopupMenuItem<String>(
+                      value: 'Tersedia',
+                      child: Text('Tersedia'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'Diproses',
+                      child: Text('Diproses'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'Diterima',
+                      child: Text('Diterima'),
+                    ),
                   ],
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
                     decoration: BoxDecoration(
                       color: cs.secondaryContainer,
                       borderRadius: BorderRadius.circular(20),
@@ -66,9 +93,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Filter', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.onSecondaryContainer)),
+                        Text(
+                          'Filter',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSecondaryContainer,
+                          ),
+                        ),
                         const SizedBox(width: 8),
-                        Icon(Icons.filter_list, size: 20, color: cs.onSecondaryContainer),
+                        Icon(
+                          Icons.filter_list,
+                          size: 20,
+                          color: cs.onSecondaryContainer,
+                        ),
                       ],
                     ),
                   ),
@@ -111,15 +149,27 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _onBottomNavTap,
         items: [
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 24, height: 24),
+            icon: SvgPicture.asset(
+              'assets/logos/homeactive.svg',
+              width: 24,
+              height: 24,
+            ),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/chat.svg', width: 24, height: 24),
+            icon: SvgPicture.asset(
+              'assets/logos/chat.svg',
+              width: 24,
+              height: 24,
+            ),
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 24, height: 24),
+            icon: SvgPicture.asset(
+              'assets/logos/profileinactive.svg',
+              width: 24,
+              height: 24,
+            ),
             label: 'Profile',
           ),
         ],
@@ -169,7 +219,10 @@ class StudentHeaderCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   program,
-                  style: TextStyle(fontSize: 14, color: cs.onPrimary.withOpacity(0.9)),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onPrimary.withOpacity(0.9),
+                  ),
                 ),
               ],
             ),
@@ -202,7 +255,12 @@ class ProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProjectDetailScreen(projectId: projectId))),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProjectDetailScreen(projectId: projectId),
+        ),
+      ),
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
@@ -216,7 +274,14 @@ class ProjectCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: cs.onSurface)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                  ),
+                ),
                 StatusTag(status: status),
               ],
             ),
@@ -231,8 +296,14 @@ class ProjectCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Deadline: $deadline', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-                Text('Partisipan: $participants', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                Text(
+                  'Deadline: $deadline',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+                Text(
+                  'Partisipan: $participants',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
               ],
             ),
           ],
@@ -249,7 +320,9 @@ class StatusTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isOpen = status.toLowerCase().contains('tersedia') || status.toLowerCase().contains('pendaftaran');
+    final isOpen =
+        status.toLowerCase().contains('tersedia') ||
+        status.toLowerCase().contains('pendaftaran');
     final bg = isOpen ? cs.primary : cs.outline;
     final fg = isOpen ? cs.onPrimary : cs.onSurface;
 
