@@ -71,8 +71,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: cs.surface,
       appBar: ChatDetailAppBar(conversation: widget.conversation),
       body: Column(
         children: [
@@ -85,12 +86,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 vertical: 6.0,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
+                color: cs.surfaceVariant,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
+              child: Text(
                 'Hari Ini',
-                style: TextStyle(fontSize: 12, color: Colors.black87),
+                style: TextStyle(fontSize: 12, color: cs.onSurface),
               ),
             ),
           ),
@@ -138,8 +139,9 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AppBar(
-      backgroundColor: const Color(0xFFE0E0E0),
+      backgroundColor: cs.surfaceVariant,
       elevation: 0,
       leading: IconButton(
         icon: SvgPicture.asset('assets/logos/back.svg', width: 24, height: 24),
@@ -153,9 +155,9 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cs.surface,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black, width: 2),
+                    border: Border.all(color: cs.onSurface, width: 2),
                   ),
                   child: const Icon(Icons.group_outlined, size: 20),
                 )
@@ -164,7 +166,7 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
                   backgroundImage: conversation.avatarUrl != null
                       ? NetworkImage(conversation.avatarUrl!)
                       : null,
-                  backgroundColor: Colors.white,
+                  backgroundColor: cs.surface,
                 ),
           const SizedBox(width: 12),
           // Name and Status
@@ -175,17 +177,17 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 Text(
                   conversation.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: cs.onSurface,
                   ),
                 ),
                 Text(
                   conversation.type == ConversationType.group
                       ? '3 Online'
                       : 'Online',
-                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  style: TextStyle(fontSize: 12, color: cs.onSurface),
                 ),
               ],
             ),
@@ -194,7 +196,7 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.black),
+          icon: Icon(Icons.more_vert, color: cs.onSurface),
           onPressed: () {
             // Handle menu
           },
@@ -219,6 +221,7 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final bool isMe = message.senderId == myId;
 
     return Padding(
@@ -234,10 +237,10 @@ class ChatBubble extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4.0, left: 8.0),
               child: Text(
                 message.senderName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: cs.onSurface,
                 ),
               ),
             ),
@@ -253,7 +256,9 @@ class ChatBubble extends StatelessWidget {
                 vertical: 10.0,
               ),
               decoration: BoxDecoration(
-                color: isMe ? const Color(0xFFD0D0D0) : const Color(0xFFE8E8E8),
+                color: isMe
+                    ? cs.surfaceVariant
+                    : cs.surfaceVariant.withOpacity(0.5),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(isMe ? 16 : 4),
                   topRight: Radius.circular(isMe ? 4 : 16),
@@ -268,7 +273,7 @@ class ChatBubble extends StatelessWidget {
                   Flexible(
                     child: Text(
                       message.text,
-                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                      style: TextStyle(fontSize: 14, color: cs.onSurface),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -277,17 +282,17 @@ class ChatBubble extends StatelessWidget {
                     children: [
                       Text(
                         message.timestamp,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          color: Colors.black54,
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
                       if (isMe) ...[
                         const SizedBox(width: 4),
-                        const Icon(
+                        Icon(
                           Icons.done_all,
                           size: 14,
-                          color: Colors.black54,
+                          color: cs.onSurfaceVariant,
                         ),
                       ],
                     ],
@@ -315,11 +320,12 @@ class ChatInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16.0),
-      decoration: const BoxDecoration(
-        color: Color(0xFFE0E0E0),
-        border: Border(top: BorderSide(color: Color(0xFFD0D0D0), width: 1)),
+      decoration: BoxDecoration(
+        color: cs.surfaceVariant,
+        border: Border(top: BorderSide(color: cs.surfaceVariant, width: 1)),
       ),
       child: Row(
         children: [
@@ -327,8 +333,8 @@ class ChatInputBar extends StatelessWidget {
           Container(
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: cs.surface,
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -346,9 +352,9 @@ class ChatInputBar extends StatelessWidget {
               controller: controller,
               decoration: InputDecoration(
                 hintText: 'Tulis Pesan...',
-                hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+                hintStyle: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: cs.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,

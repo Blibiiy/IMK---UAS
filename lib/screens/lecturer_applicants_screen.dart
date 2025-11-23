@@ -70,12 +70,13 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final project = context.watch<ProjectProvider>().getProjectById(
       widget.projectId,
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -106,8 +107,8 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black, width: 1.5),
+                      foregroundColor: cs.onSurface,
+                      side: BorderSide(color: cs.outline, width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -131,12 +132,12 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
                 child: project == null
                     ? const Center(child: Text('Project tidak ditemukan'))
                     : project.applicants.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'Belum Ada Pendaftar',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey,
+                            color: cs.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -187,10 +188,11 @@ class _ApplicantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
+        color: cs.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -206,15 +208,16 @@ class _ApplicantCard extends StatelessWidget {
               children: [
                 Text(
                   applicant.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   applicant.program,
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
                 ),
               ],
             ),
@@ -225,8 +228,8 @@ class _ApplicantCard extends StatelessWidget {
               OutlinedButton(
                 onPressed: onAccept,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  side: const BorderSide(color: Colors.black, width: 1.5),
+                  foregroundColor: cs.onSurface,
+                  side: BorderSide(color: cs.outline, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -244,8 +247,8 @@ class _ApplicantCard extends StatelessWidget {
               OutlinedButton(
                 onPressed: onReject,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  side: const BorderSide(color: Colors.black, width: 1.5),
+                  foregroundColor: cs.onSurface,
+                  side: BorderSide(color: cs.outline, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),

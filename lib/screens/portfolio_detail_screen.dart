@@ -7,8 +7,13 @@ import 'portfolio_form_screen.dart';
 
 class PortfolioDetailScreen extends StatelessWidget {
   final PortfolioItem item;
+  final bool isViewOnly;
 
-  const PortfolioDetailScreen({super.key, required this.item});
+  const PortfolioDetailScreen({
+    super.key,
+    required this.item,
+    this.isViewOnly = false,
+  });
 
   Widget _buildProjectDetail() {
     final project = item as ProjectPortfolio;
@@ -142,75 +147,77 @@ class PortfolioDetailScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        // Edit and Delete buttons
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  // Navigate to Edit mode
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          PortfolioFormScreen(existingItem: item),
+        if (!isViewOnly) ...[
+          const SizedBox(height: 24),
+          // Edit and Delete buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    // Navigate to Edit mode
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PortfolioFormScreen(existingItem: item),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    side: const BorderSide(color: Colors.black, width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  side: const BorderSide(color: Colors.black, width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text(
-                  'Edit',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  child: const Text(
+                    'Edit',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Show confirmation dialog
-                  showDialog(
-                    context: context,
-                    builder: (context) => ConfirmationDialog(
-                      title: 'Hapus Portfolio',
-                      description:
-                          'Apakah Anda yakin ingin menghapus portfolio ini?',
-                      onConfirm: () {
-                        // Delete portfolio
-                        Provider.of<PortfolioProvider>(
-                          context,
-                          listen: false,
-                        ).deletePortfolio(item.id);
-                        // Close detail screen and dialog
-                        Navigator.pop(context); // Close detail screen
-                      },
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Show confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (context) => ConfirmationDialog(
+                        title: 'Hapus Portfolio',
+                        description:
+                            'Apakah Anda yakin ingin menghapus portfolio ini?',
+                        onConfirm: () {
+                          // Delete portfolio
+                          Provider.of<PortfolioProvider>(
+                            context,
+                            listen: false,
+                          ).deletePortfolio(item.id);
+                          // Close detail screen and dialog
+                          Navigator.pop(context); // Close detail screen
+                        },
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -249,75 +256,77 @@ class PortfolioDetailScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(organization.description, style: const TextStyle(fontSize: 14)),
-        const SizedBox(height: 24),
-        // Edit and Delete buttons
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  // Navigate to Edit mode
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          PortfolioFormScreen(existingItem: item),
+        if (!isViewOnly) ...[
+          const SizedBox(height: 24),
+          // Edit and Delete buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    // Navigate to Edit mode
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PortfolioFormScreen(existingItem: item),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    side: const BorderSide(color: Colors.black, width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  side: const BorderSide(color: Colors.black, width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text(
-                  'Edit',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  child: const Text(
+                    'Edit',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Show confirmation dialog
-                  showDialog(
-                    context: context,
-                    builder: (context) => ConfirmationDialog(
-                      title: 'Hapus Portfolio',
-                      description:
-                          'Apakah Anda yakin ingin menghapus portfolio ini?',
-                      onConfirm: () {
-                        // Delete portfolio
-                        Provider.of<PortfolioProvider>(
-                          context,
-                          listen: false,
-                        ).deletePortfolio(item.id);
-                        // Close detail screen and dialog
-                        Navigator.pop(context); // Close detail screen
-                      },
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Show confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (context) => ConfirmationDialog(
+                        title: 'Hapus Portfolio',
+                        description:
+                            'Apakah Anda yakin ingin menghapus portfolio ini?',
+                        onConfirm: () {
+                          // Delete portfolio
+                          Provider.of<PortfolioProvider>(
+                            context,
+                            listen: false,
+                          ).deletePortfolio(item.id);
+                          // Close detail screen and dialog
+                          Navigator.pop(context); // Close detail screen
+                        },
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ],
     );
   }

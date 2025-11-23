@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/portfolio_provider.dart';
+import '../providers/user_provider.dart';
+import '../theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
 class PortfolioFormScreen extends StatefulWidget {
@@ -90,6 +92,18 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
 
   Future<void> _handleSubmit() async {
     final provider = Provider.of<PortfolioProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userId = userProvider.currentUser?.id;
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User tidak ditemukan. Silakan login kembali.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     // Show loading
     showDialog(
@@ -118,7 +132,7 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
           if (mounted) Navigator.pop(context); // Back to detail
           if (mounted) Navigator.pop(context); // Back to list
         } else {
-          await provider.addPortfolio(certificate);
+          await provider.addPortfolio(certificate, userId);
           if (mounted) Navigator.pop(context); // Close loading
           if (mounted) Navigator.pop(context); // Back to list
         }
@@ -139,7 +153,7 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
           if (mounted) Navigator.pop(context); // Back to detail
           if (mounted) Navigator.pop(context); // Back to list
         } else {
-          await provider.addPortfolio(organization);
+          await provider.addPortfolio(organization, userId);
           if (mounted) Navigator.pop(context); // Close loading
           if (mounted) Navigator.pop(context); // Back to list
         }
@@ -162,134 +176,167 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: cs.surface,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Back button
-                const BackButton(color: Colors.black),
-                const SizedBox(height: 16),
-                // Title
-                const Text(
-                  'Add Portfolio',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
-                // Category Dropdown
-                const Text(
-                  'Kategori',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: _selectedCategory,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Colors.grey),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Colors.grey),
-                    ),
-                    suffixIcon: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: SvgPicture.asset(
-                        'assets/logos/dropdown.svg',
-                        width: 20,
-                        height: 20,
-                      ),
+        child: Column(
+          children: [
+            // Gradient Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              decoration: AppTheme.headerDecoration(cs),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: cs.onPrimary),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Add Portfolio',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onPrimary,
                     ),
                   ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Sertifikat',
-                      child: Text('Sertifikat'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Organisasi',
-                      child: Text('Organisasi'),
-                    ),
-                  ],
-                  onChanged: isEditing
-                      ? null // Disable dropdown when editing
-                      : (value) {
-                          setState(() {
-                            _selectedCategory = value!;
-                          });
-                        },
-                ),
-                const SizedBox(height: 24),
-                // Render form based on category
-                if (_selectedCategory == 'Sertifikat') _buildCertificateForm(),
-                if (_selectedCategory == 'Organisasi') _buildOrganizationForm(),
-                const SizedBox(height: 24),
-                // Submit Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _handleSubmit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: Text(
-                      isEditing ? 'Update' : 'Tambah',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
+                ],
+              ),
             ),
-          ),
+            // Form Content
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Category Dropdown
+                      Text(
+                        'Kategori',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _selectedCategory,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: cs.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: cs.outline),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: cs.outline),
+                          ),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              'assets/logos/dropdown.svg',
+                              width: 20,
+                              height: 20,
+                            ),
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Sertifikat',
+                            child: Text('Sertifikat'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Organisasi',
+                            child: Text('Organisasi'),
+                          ),
+                        ],
+                        onChanged: isEditing
+                            ? null // Disable dropdown when editing
+                            : (value) {
+                                setState(() {
+                                  _selectedCategory = value!;
+                                });
+                              },
+                      ),
+                      const SizedBox(height: 24),
+                      // Render form based on category
+                      if (_selectedCategory == 'Sertifikat')
+                        _buildCertificateForm(),
+                      if (_selectedCategory == 'Organisasi')
+                        _buildOrganizationForm(),
+                      const SizedBox(height: 24),
+                      // Submit Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _handleSubmit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: cs.primary,
+                            foregroundColor: cs.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: Text(
+                            isEditing ? 'Update' : 'Tambah',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildCertificateForm() {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Title
-        const Text('Judul', style: TextStyle(fontSize: 14, color: Colors.grey)),
+        Text(
+          'Judul',
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: _titleController,
           decoration: InputDecoration(
             hintText: 'Contoh: IBM Certified AI Engineer',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: cs.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
           ),
         ),
         const SizedBox(height: 16),
         // Issuer
-        const Text(
+        Text(
           'Penerbit Sertifikat',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -297,22 +344,22 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
           decoration: InputDecoration(
             hintText: 'Contoh: Microsoft',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: cs.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
           ),
         ),
         const SizedBox(height: 16),
         // Date Range
-        const Text(
+        Text(
           'Tanggal Berlaku',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         Row(
@@ -324,14 +371,14 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
                 decoration: InputDecoration(
                   hintText: '09/10/2025',
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: cs.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.grey),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.grey),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   suffixIcon: Padding(
                     padding: const EdgeInsets.all(12.0),
@@ -356,14 +403,14 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
                 decoration: InputDecoration(
                   hintText: '09/10/2025',
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: cs.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.grey),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.grey),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   suffixIcon: Padding(
                     padding: const EdgeInsets.all(12.0),
@@ -381,9 +428,9 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
         ),
         const SizedBox(height: 16),
         // Skills Input
-        const Text(
+        Text(
           'Skill Yang Didapatkan',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         SkillInputChipField(
@@ -396,9 +443,9 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
         ),
         const SizedBox(height: 16),
         // Certificate File Upload
-        const Text(
+        Text(
           'Bukti Sertifikat',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
@@ -418,7 +465,7 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
             style: const TextStyle(color: Colors.black),
           ),
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Colors.grey),
+            side: BorderSide(color: cs.outline),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -430,33 +477,37 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
   }
 
   Widget _buildOrganizationForm() {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Title
-        const Text('Judul', style: TextStyle(fontSize: 14, color: Colors.grey)),
+        Text(
+          'Judul',
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: _orgTitleController,
           decoration: InputDecoration(
             hintText: 'Contoh: Himpunan Mahasiswa Elektronika',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: cs.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
           ),
         ),
         const SizedBox(height: 16),
         // Position
-        const Text(
+        Text(
           'Posisi',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -464,22 +515,22 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
           decoration: InputDecoration(
             hintText: 'Contoh: Ketua Divisi Teknologi',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: cs.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
           ),
         ),
         const SizedBox(height: 16),
         // Duration
-        const Text(
+        Text(
           'Masa Jabatan',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -487,22 +538,22 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
           decoration: InputDecoration(
             hintText: 'Contoh: 1 Tahun 6 Bulan',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: cs.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
           ),
         ),
         const SizedBox(height: 16),
         // Description
-        const Text(
+        Text(
           'Kegiatan & Kontribusi',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -515,14 +566,14 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
 
 2. Memberikan Kata Sambutan Pada Acara Pengajian Bahlil Dengan Tema "Menjawab Pertanyaan Munkar-Nakir Dengan Bantuan AI" ...''',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: cs.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
           ),
         ),
@@ -571,6 +622,7 @@ class _SkillInputChipFieldState extends State<SkillInputChipField> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -580,14 +632,14 @@ class _SkillInputChipFieldState extends State<SkillInputChipField> {
           decoration: InputDecoration(
             hintText: 'Contoh: Leadership',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: cs.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderSide: BorderSide(color: cs.outline),
             ),
             suffixIcon: IconButton(
               icon: SvgPicture.asset(
@@ -615,7 +667,7 @@ class _SkillInputChipFieldState extends State<SkillInputChipField> {
                   height: 16,
                 ),
                 onDeleted: () => _removeSkill(entry.key),
-                backgroundColor: const Color(0xFFE0E0E0),
+                backgroundColor: cs.surfaceVariant,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

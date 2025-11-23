@@ -532,4 +532,27 @@ class ProjectProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  /// Check user status in a project (tersedia, terdaftar, diterima)
+  Future<String> getUserStatusInProject(String projectId, String userId) async {
+    try {
+      // Check if user is a member
+      final members = await _supabaseService.getProjectMembers(projectId);
+      final isMember = members.any((m) => m['id'].toString() == userId);
+      if (isMember) return 'Diterima';
+
+      // Check if user is an applicant
+      final isApplicant = await _supabaseService.isAlreadyApplied(
+        projectId: projectId,
+        studentId: userId,
+      );
+      if (isApplicant) return 'Terdaftar';
+
+      // User hasn't applied yet
+      return 'Tersedia';
+    } catch (e) {
+      print('Error checking user status: $e');
+      return 'Tersedia';
+    }
+  }
 }

@@ -152,8 +152,8 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -172,16 +172,20 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                   onPressed: () => Navigator.pop(context),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Add Project',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 24),
 
                 // Nama Project
-                const Text(
+                Text(
                   'Nama Project',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -196,9 +200,9 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                 const SizedBox(height: 16),
 
                 // Tanggal Deadline
-                const Text(
+                Text(
                   'Tanggal Deadline',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -220,9 +224,9 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                 const SizedBox(height: 16),
 
                 // Jumlah Partisipan
-                const Text(
+                Text(
                   'Jumlah Partisipan',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -245,9 +249,9 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                 const SizedBox(height: 16),
 
                 // Persyaratan Project
-                const Text(
+                Text(
                   'Persyaratan Project',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 RequirementInputChipField(
@@ -261,9 +265,9 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                 const SizedBox(height: 16),
 
                 // Detail Project
-                const Text(
+                Text(
                   'Detail Project',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(

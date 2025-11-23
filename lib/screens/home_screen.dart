@@ -17,13 +17,41 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  String _selectedFilter = 'Semua';
+  Map<String, String> _projectStatuses =
+      {}; // projectId -> status for current user
 
   @override
   void initState() {
     super.initState();
     // Load projects from Supabase when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProjectProvider>().loadProjects();
+      _loadProjectsAndStatuses();
+    });
+  }
+
+  Future<void> _loadProjectsAndStatuses() async {
+    await context.read<ProjectProvider>().loadProjects();
+    await _loadUserStatusForAllProjects();
+  }
+
+  Future<void> _loadUserStatusForAllProjects() async {
+    final userId = context.read<UserProvider>().currentUser?.id;
+    if (userId == null) return;
+
+    final projectProvider = context.read<ProjectProvider>();
+    final statuses = <String, String>{};
+
+    for (var project in projectProvider.projects) {
+      final status = await projectProvider.getUserStatusInProject(
+        project.id,
+        userId,
+      );
+      statuses[project.id] = status;
+    }
+
+    setState(() {
+      _projectStatuses = statuses;
     });
   }
 
@@ -72,15 +100,20 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: PopupMenuButton<String>(
-                  onSelected: (_) {},
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedFilter = value;
+                    });
+                  },
                   itemBuilder: (BuildContext context) => const [
+                    PopupMenuItem<String>(value: 'Semua', child: Text('Semua')),
                     PopupMenuItem<String>(
                       value: 'Tersedia',
                       child: Text('Tersedia'),
                     ),
                     PopupMenuItem<String>(
-                      value: 'Diproses',
-                      child: Text('Diproses'),
+                      value: 'Terdaftar',
+                      child: Text('Terdaftar'),
                     ),
                     PopupMenuItem<String>(
                       value: 'Diterima',
@@ -100,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Filter',
+                          _selectedFilter,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -124,12 +157,39 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Consumer<ProjectProvider>(
                 builder: (context, projectProvider, child) {
+                  // Filter projects based on selected filter
+                  final filteredProjects = projectProvider.projects.where((
+                    project,
+                  ) {
+                    if (_selectedFilter == 'Semua') return true;
+                    final userStatus =
+                        _projectStatuses[project.id] ?? 'Tersedia';
+                    return userStatus == _selectedFilter;
+                  }).toList();
+
+                  if (filteredProjects.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Text(
+                          'Tidak ada project untuk kategori $_selectedFilter',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: projectProvider.projects.length,
+                    itemCount: filteredProjects.length,
                     itemBuilder: (context, index) {
-                      final project = projectProvider.projects[index];
+                      final project = filteredProjects[index];
+                      final userStatus =
+                          _projectStatuses[project.id] ?? 'Tersedia';
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: ProjectCard(
@@ -138,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           description: project.description,
                           deadline: project.deadline,
                           participants: project.participants,
-                          status: project.statusText,
+                          status: userStatus, // Show user-specific status
                         ),
                       );
                     },
@@ -326,11 +386,27 @@ class StatusTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isOpen =
-        status.toLowerCase().contains('tersedia') ||
-        status.toLowerCase().contains('pendaftaran');
-    final bg = isOpen ? cs.primary : cs.outline;
-    final fg = isOpen ? cs.onPrimary : cs.onSurface;
+
+    Color bg;
+    Color fg;
+
+    switch (status.toLowerCase()) {
+      case 'tersedia':
+        bg = cs.primary;
+        fg = cs.onPrimary;
+        break;
+      case 'terdaftar':
+        bg = const Color(0xFFF59E0B); // Orange/Warning color
+        fg = Colors.white;
+        break;
+      case 'diterima':
+        bg = const Color(0xFF2E7D32); // Success green
+        fg = Colors.white;
+        break;
+      default:
+        bg = cs.outline;
+        fg = cs.onSurface;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),

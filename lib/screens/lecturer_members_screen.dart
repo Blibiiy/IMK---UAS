@@ -27,12 +27,12 @@ class _LecturerMembersScreenState extends State<LecturerMembersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final project = context.watch<ProjectProvider>().getProjectById(
       widget.projectId,
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -88,12 +88,12 @@ class _LecturerMembersScreenState extends State<LecturerMembersScreen> {
                 child: project == null
                     ? const Center(child: Text('Project tidak ditemukan'))
                     : project.members.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'Belum Ada Anggota',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey,
+                            color: cs.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -133,10 +133,11 @@ class _MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
+        color: cs.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -152,15 +153,16 @@ class _MemberCard extends StatelessWidget {
               children: [
                 Text(
                   member.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   member.program,
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  style: TextStyle(fontSize: 13, color: cs.onSurface),
                 ),
               ],
             ),

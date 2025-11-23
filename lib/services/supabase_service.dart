@@ -445,6 +445,7 @@ class SupabaseService {
 
   /// Add portfolio project
   Future<Map<String, dynamic>?> addPortfolioProject({
+    required String userId,
     required String title,
     required String lecturer,
     required String deadline,
@@ -456,6 +457,7 @@ class SupabaseService {
       final response = await client
           .from(SupabaseConfig.portfolioProjectsTable)
           .insert({
+            'user_id': userId,
             'title': title,
             'lecturer': lecturer,
             'deadline': deadline,
@@ -475,6 +477,7 @@ class SupabaseService {
 
   /// Add portfolio certificate
   Future<Map<String, dynamic>?> addPortfolioCertificate({
+    required String userId,
     required String title,
     required String issuer,
     required String startDate,
@@ -486,6 +489,7 @@ class SupabaseService {
       final response = await client
           .from(SupabaseConfig.portfolioCertificatesTable)
           .insert({
+            'user_id': userId,
             'title': title,
             'issuer': issuer,
             'start_date': startDate,
@@ -505,6 +509,7 @@ class SupabaseService {
 
   /// Add portfolio organization
   Future<Map<String, dynamic>?> addPortfolioOrganization({
+    required String userId,
     required String title,
     required String position,
     required String duration,
@@ -514,6 +519,7 @@ class SupabaseService {
       final response = await client
           .from(SupabaseConfig.portfolioOrganizationsTable)
           .insert({
+            'user_id': userId,
             'title': title,
             'position': position,
             'duration': duration,

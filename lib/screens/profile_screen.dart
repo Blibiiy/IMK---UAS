@@ -7,6 +7,7 @@ import '../screens/home_screen.dart';
 import '../screens/chat_list_screen.dart';
 import 'portfolio_detail_screen.dart';
 import 'portfolio_form_screen.dart';
+import '../theme/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,7 +24,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     // Load portfolios from Supabase when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PortfolioProvider>().loadPortfolios();
+      final userId = context.read<UserProvider>().currentUser?.id;
+      context.read<PortfolioProvider>().loadPortfolios(userId: userId);
     });
   }
 
@@ -49,154 +51,158 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final userProvider = context.watch<UserProvider>();
     final currentUser = userProvider.currentUser;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 50),
-              // Student Header Card (reusable component from HomeScreen)
-              StudentHeaderCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header dengan gradient (konsisten dengan HomeScreen)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
+              decoration: AppTheme.headerDecoration(cs),
+              child: StudentHeaderCard(
                 name: currentUser?.fullName ?? 'User',
                 program: currentUser?.program ?? 'Program Studi',
                 imageUrl:
                     currentUser?.avatarUrl ??
                     'https://placehold.co/100x100/E0E0E0/E0E0E0',
               ),
-              const SizedBox(height: 24),
-              // Portfolio Header with + button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Portfolio',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      // Navigate to Add Portfolio (Create mode)
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PortfolioFormScreen(),
-                        ),
-                      );
-                    },
-                    icon: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Portfolio List using Consumer
-              Consumer<PortfolioProvider>(
-                builder: (context, portfolioProvider, child) {
-                  if (portfolioProvider.portfolioItems.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Text(
-                          'Belum ada portfolio',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: portfolioProvider.portfolioItems.length,
-                    itemBuilder: (context, index) {
-                      final item = portfolioProvider.portfolioItems[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: PortfolioCard(item: item),
-                      );
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              // Logout Button
-              GestureDetector(
-                onTap: () {
-                  // Handle logout
-                  context.read<UserProvider>().logout();
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/login',
-                    (route) => false,
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 12.0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
+                  // Portfolio Header with + button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SvgPicture.asset(
-                        'assets/logos/logout.svg',
-                        width: 24,
-                        height: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Logout',
+                      Text(
+                        'Portfolio',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          // Navigate to Add Portfolio (Create mode)
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PortfolioFormScreen(),
+                            ),
+                          );
+                        },
+                        icon: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: cs.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.add, color: cs.onPrimary, size: 24),
                         ),
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  // Portfolio List using Consumer
+                  Consumer<PortfolioProvider>(
+                    builder: (context, portfolioProvider, child) {
+                      if (portfolioProvider.portfolioItems.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Text(
+                              'Belum ada portfolio',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: portfolioProvider.portfolioItems.length,
+                        itemBuilder: (context, index) {
+                          final item = portfolioProvider.portfolioItems[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: PortfolioCard(item: item),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  // Logout Button
+                  GestureDetector(
+                    onTap: () {
+                      // Handle logout
+                      context.read<UserProvider>().logout();
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/login',
+                        (route) => false,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 12.0,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cs.surfaceVariant,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/logos/logout.svg',
+                            width: 24,
+                            height: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFFE0E0E0),
         currentIndex: _currentIndex,
         onTap: _onBottomNavTap,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
         items: [
           BottomNavigationBarItem(
             icon: SvgPicture.asset(
               'assets/logos/homeinactive.svg',
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
             ),
             label: 'Home',
           ),
@@ -205,10 +211,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'assets/logos/chat.svg',
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
             ),
             label: 'Chat',
           ),
@@ -217,10 +219,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'assets/logos/profileactive.svg',
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
             ),
             label: 'Profile',
           ),
@@ -271,6 +269,7 @@ class PortfolioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
         // Navigate to detail screen
@@ -284,7 +283,7 @@ class PortfolioCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: const Color(0xFFE0E0E0),
+          color: cs.surfaceVariant,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -293,19 +292,23 @@ class PortfolioCard extends StatelessWidget {
             // Title
             Text(
               item.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
             ),
             const SizedBox(height: 8),
             // Sub text (dynamic based on type)
             Text(
               _getSubText(),
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              style: TextStyle(fontSize: 14, color: cs.onSurface),
             ),
             const SizedBox(height: 4),
             // Extra info (dynamic based on type)
             Text(
               _getExtraInfo(),
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
             ),
           ],
         ),

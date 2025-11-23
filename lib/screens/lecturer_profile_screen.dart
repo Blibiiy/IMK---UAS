@@ -7,6 +7,7 @@ import '../providers/user_provider.dart';
 import 'lecturer_project_detail_screen.dart';
 import 'lecturer_home_screen.dart';
 import 'chat_list_screen.dart';
+import '../theme/app_theme.dart';
 
 class LecturerProfileScreen extends StatefulWidget {
   const LecturerProfileScreen({super.key});
@@ -43,69 +44,25 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final userProvider = context.watch<UserProvider>();
     final currentUser = userProvider.currentUser;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFFE0E0E0),
-        currentIndex: _currentIndex,
-        onTap: _onBottomNavTap,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        items: [
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/homeinactive.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
-            ),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/chat.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
-            ),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/profileactive.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                Colors.black,
-                BlendMode.srcIn,
-              ),
-            ),
-            label: 'Profile',
-          ),
-        ],
-      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 50, 16, 0),
+            // Header dengan gradient (konsisten dengan HomeScreen)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
+              decoration: AppTheme.headerDecoration(cs),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
+                  color: Colors.white.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.25)),
                 ),
                 child: Row(
                   children: [
@@ -123,9 +80,10 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                         children: [
                           Text(
                             currentUser?.fullName ?? 'Dosen',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: cs.onPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -133,9 +91,9 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                             currentUser?.role == 'dosen'
                                 ? 'Dosen'
                                 : (currentUser?.program ?? ''),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
-                              color: Colors.black87,
+                              color: cs.onPrimary.withOpacity(0.9),
                             ),
                           ),
                         ],
@@ -145,32 +103,34 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             // History Project section
-            Container(
-              width: double.infinity,
-              color: const Color(0xFFE0E0E0),
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'History Project',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Consumer<ProjectProvider>(
                     builder: (context, provider, _) {
                       final projects = provider.projects;
                       if (projects.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
+                            padding: const EdgeInsets.symmetric(vertical: 40),
                             child: Text(
                               'Belum ada project',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey,
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -195,48 +155,76 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                       );
                     },
                   ),
+                  const SizedBox(height: 40),
+                  // Logout
+                  GestureDetector(
+                    onTap: _onLogout,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cs.surfaceVariant,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/logos/logout.svg',
+                            width: 24,
+                            height: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
-            const SizedBox(height: 40),
-            // Logout
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GestureDetector(
-                onTap: _onLogout,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB0B0B0),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/logos/logout.svg',
-                        width: 24,
-                        height: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Logout',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 80),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onBottomNavTap,
+        items: [
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/logos/homeinactive.svg',
+              width: 24,
+              height: 24,
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/logos/chat.svg',
+              width: 24,
+              height: 24,
+            ),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              'assets/logos/profileactive.svg',
+              width: 24,
+              height: 24,
+            ),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
@@ -257,9 +245,10 @@ class _HistoryProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF9F9F9F),
+        color: cs.surfaceVariant,
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(16),
@@ -268,14 +257,18 @@ class _HistoryProjectCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: cs.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             description,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 14, height: 1.4),
+            style: TextStyle(fontSize: 14, height: 1.4, color: cs.onSurface),
           ),
           const SizedBox(height: 12),
           Row(
@@ -283,9 +276,10 @@ class _HistoryProjectCard extends StatelessWidget {
             children: [
               Text(
                 deadline,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
                 ),
               ),
               GestureDetector(
@@ -298,9 +292,13 @@ class _HistoryProjectCard extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'Detail >>',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
                 ),
               ),
             ],

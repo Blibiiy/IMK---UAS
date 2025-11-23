@@ -91,92 +91,89 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/logos/back.svg',
-            width: 24,
-            height: 24,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Chat',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Filter Buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-            child: SegmentedButton<FilterType>(
-              segments: const [
-                ButtonSegment<FilterType>(
-                  value: FilterType.semua,
-                  label: Text('Semua'),
-                ),
-                ButtonSegment<FilterType>(
-                  value: FilterType.grup,
-                  label: Text('Grup'),
-                ),
-                ButtonSegment<FilterType>(
-                  value: FilterType.private,
-                  label: Text('Private'),
-                ),
-              ],
-              selected: {_currentFilter},
-              onSelectionChanged: (Set<FilterType> newSelection) {
-                setState(() {
-                  _currentFilter = newSelection.first;
-                });
-              },
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.resolveWith<Color>((
-                  Set<WidgetState> states,
-                ) {
-                  if (states.contains(WidgetState.selected)) {
-                    return const Color(0xFFE0E0E0);
-                  }
-                  return Colors.white;
-                }),
-                foregroundColor: WidgetStateProperty.all(Colors.black),
-                side: WidgetStateProperty.all(
-                  const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                ),
+      backgroundColor: cs.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: SvgPicture.asset(
+                      'assets/logos/back.svg',
+                      width: 24,
+                      height: 24,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Chat',
+                    style: TextStyle(
+                      color: cs.onSurface,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          // Conversations List
-          Expanded(
-            child: ListView.builder(
-              itemCount: _filteredConversations.length,
-              itemBuilder: (context, index) {
-                final conversation = _filteredConversations[index];
-                return ConversationListTile(
-                  conversation: conversation,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ChatDetailScreen(conversation: conversation),
-                      ),
-                    );
-                  },
-                );
-              },
+            // Filter Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 16,
+              ),
+              child: SegmentedButton<FilterType>(
+                segments: const [
+                  ButtonSegment<FilterType>(
+                    value: FilterType.semua,
+                    label: Text('Semua'),
+                  ),
+                  ButtonSegment<FilterType>(
+                    value: FilterType.grup,
+                    label: Text('Grup'),
+                  ),
+                  ButtonSegment<FilterType>(
+                    value: FilterType.private,
+                    label: Text('Private'),
+                  ),
+                ],
+                selected: {_currentFilter},
+                onSelectionChanged: (Set<FilterType> newSelection) {
+                  setState(() {
+                    _currentFilter = newSelection.first;
+                  });
+                },
+              ),
             ),
-          ),
-        ],
+            // Conversations List
+            Expanded(
+              child: ListView.builder(
+                itemCount: _filteredConversations.length,
+                itemBuilder: (context, index) {
+                  final conversation = _filteredConversations[index];
+                  return ConversationListTile(
+                    conversation: conversation,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ChatDetailScreen(conversation: conversation),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -195,10 +192,16 @@ class ConversationListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: cs.surfaceVariant,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
           children: [
             // Avatar or Group Icon
@@ -207,18 +210,22 @@ class ConversationListTile extends StatelessWidget {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cs.surface,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black, width: 2),
+                      border: Border.all(color: cs.outline, width: 2),
                     ),
-                    child: const Icon(Icons.group_outlined, size: 24),
+                    child: Icon(
+                      Icons.group_outlined,
+                      size: 24,
+                      color: cs.onSurface,
+                    ),
                   )
                 : CircleAvatar(
                     radius: 25,
                     backgroundImage: conversation.avatarUrl != null
                         ? NetworkImage(conversation.avatarUrl!)
                         : null,
-                    backgroundColor: const Color(0xFFE0E0E0),
+                    backgroundColor: cs.surface,
                   ),
             const SizedBox(width: 16),
             // Name and Last Message
@@ -228,15 +235,16 @@ class ConversationListTile extends StatelessWidget {
                 children: [
                   Text(
                     conversation.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     conversation.lastMessage,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -246,7 +254,7 @@ class ConversationListTile extends StatelessWidget {
             // Timestamp
             Text(
               conversation.timestamp,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
             ),
           ],
         ),

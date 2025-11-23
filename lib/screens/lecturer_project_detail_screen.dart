@@ -69,10 +69,11 @@ class LecturerProjectDetailScreen extends StatelessWidget {
     final postedFormatted = DateFormat('dd MMMM yyyy').format(project.postedAt);
     final postedAgo = _timeAgo(project.postedAt);
 
+    final cs = Theme.of(context).colorScheme;
     final isOpen = project.status == ProjectStatus.tersedia;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -83,7 +84,11 @@ class LecturerProjectDetailScreen extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    icon: SvgPicture.asset('assets/logos/back.svg', width: 24, height: 24),
+                    icon: SvgPicture.asset(
+                      'assets/logos/back.svg',
+                      width: 24,
+                      height: 24,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
@@ -92,19 +97,28 @@ class LecturerProjectDetailScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => LecturerEditProjectScreen(projectId: projectId),
+                          builder: (_) =>
+                              LecturerEditProjectScreen(projectId: projectId),
                         ),
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black, width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      foregroundColor: cs.onSurface,
+                      side: BorderSide(color: cs.outline, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text(
                       'Edit',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -114,23 +128,31 @@ class LecturerProjectDetailScreen extends StatelessWidget {
               // Title
               Text(
                 project.title,
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
               ),
               const SizedBox(height: 8),
 
               // Supervisor
               Text(
                 project.supervisor,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
               ),
               const SizedBox(height: 4),
 
               // Deadline
               Text(
                 'Deadline: ${project.deadline}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey,
+                  color: cs.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -139,58 +161,81 @@ class LecturerProjectDetailScreen extends StatelessWidget {
               // Diposting
               Text(
                 'Diposting: $postedFormatted • $postedAgo',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey,
+                  color: cs.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               if (project.editedAt != null) ...[
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   '(Diedit)',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: cs.onSurfaceVariant,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
               ],
 
               const SizedBox(height: 12),
-              const Divider(thickness: 1),
+              Divider(thickness: 1, color: cs.outline),
               const SizedBox(height: 16),
 
               // Persyaratan Project
-              const Text(
+              Text(
                 'Persyaratan Project :',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               if (project.requirements.isEmpty)
-                const Text('-', style: TextStyle(fontSize: 14, height: 1.5))
+                Text(
+                  '-',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: cs.onSurface,
+                  ),
+                )
               else
                 ...project.requirements.asMap().entries.map(
-                      (e) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Text(
-                          '${e.key + 1}. ${e.value}',
-                          style: const TextStyle(fontSize: 14, height: 1.5),
-                        ),
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(
+                      '${e.key + 1}. ${e.value}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.5,
+                        color: cs.onSurface,
                       ),
                     ),
+                  ),
+                ),
 
               const SizedBox(height: 24),
 
               // Detail Project
-              const Text(
+              Text(
                 'Detail Project :',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               Text(
                 project.description,
-                style: const TextStyle(fontSize: 14, height: 1.5),
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: cs.onSurface,
+                ),
               ),
 
               const SizedBox(height: 48),
@@ -204,13 +249,14 @@ class LecturerProjectDetailScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => LecturerMembersScreen(projectId: projectId),
+                            builder: (_) =>
+                                LecturerMembersScreen(projectId: projectId),
                           ),
                         );
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        side: const BorderSide(color: Colors.black, width: 1.5),
+                        foregroundColor: cs.onSurface,
+                        side: BorderSide(color: cs.outline, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -218,7 +264,10 @@ class LecturerProjectDetailScreen extends StatelessWidget {
                       ),
                       child: const Text(
                         'List Anggota',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -228,8 +277,8 @@ class LecturerProjectDetailScreen extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: () => _confirmCloseRegistration(context),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.black,
-                          side: const BorderSide(color: Colors.black, width: 1.5),
+                          foregroundColor: cs.onSurface,
+                          side: BorderSide(color: cs.outline, width: 1.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -237,7 +286,10 @@ class LecturerProjectDetailScreen extends StatelessWidget {
                         ),
                         child: const Text(
                           'Tutup Pendaftaran',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),

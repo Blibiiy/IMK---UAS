@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/project_provider.dart';
 import '../providers/portfolio_provider.dart';
 import '../services/supabase_service.dart';
+import '../theme/app_theme.dart';
+import 'portfolio_detail_screen.dart';
 
 class StudentProfileDetailScreen extends StatefulWidget {
   final Student student;
@@ -65,8 +67,8 @@ class _StudentProfileDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -99,7 +101,7 @@ class _StudentProfileDetailScreenState
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE0E0E0),
+                          color: cs.surfaceVariant,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -117,17 +119,18 @@ class _StudentProfileDetailScreenState
                                 children: [
                                   Text(
                                     widget.student.name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
+                                      color: cs.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     widget.student.program,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.black87,
+                                      color: cs.onSurface,
                                     ),
                                   ),
                                 ],
@@ -142,11 +145,12 @@ class _StudentProfileDetailScreenState
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Portfolio',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
+                              color: cs.onSurface,
                             ),
                           ),
                         ],
@@ -159,15 +163,15 @@ class _StudentProfileDetailScreenState
                           child: Center(child: CircularProgressIndicator()),
                         )
                       else if (_portfolioItems.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 40),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
                           child: Center(
                             child: Text(
                               'Belum ada portfolio',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey,
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -181,7 +185,21 @@ class _StudentProfileDetailScreenState
                               const SizedBox(height: 16),
                           itemBuilder: (context, index) {
                             final item = _portfolioItems[index];
-                            return _PortfolioCompactCard(item: item);
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PortfolioDetailScreen(
+                                      item: item,
+                                      isViewOnly:
+                                          true, // Dosen hanya melihat, tidak bisa edit/delete
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: _PortfolioCompactCard(item: item),
+                            );
                           },
                         ),
                       const SizedBox(height: 24),
@@ -232,10 +250,11 @@ class _PortfolioCompactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
+        color: cs.surfaceVariant,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -243,17 +262,21 @@ class _PortfolioCompactCard extends StatelessWidget {
         children: [
           Text(
             item.title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: cs.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             _getSubText(),
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            style: TextStyle(fontSize: 14, color: cs.onSurface),
           ),
           const SizedBox(height: 4),
           Text(
             _getExtraInfo(),
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
           ),
         ],
       ),

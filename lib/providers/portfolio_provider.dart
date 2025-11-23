@@ -144,73 +144,32 @@ class PortfolioProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // Data dummy untuk fallback
-  final List<PortfolioItem> _dummyPortfolioItems = [
-    // Dummy data - ProjectPortfolio
-    ProjectPortfolio(
-      id: '1',
-      title: 'Project Deteksi Plat Kendaraan Bermotor',
-      lecturer: 'Dr. Bahlul Amba, S.Pd',
-      deadline: '10 Oktober 2025',
-      description:
-          'Project Mobile App Yang Ditujukan Untuk Membantu Riset Dan Penelitian Terhadap Masalah 19 Juta Lapangan Pekerjaan',
-      requirements: [
-        'Mampu Bertanggung Jawab Dan Jujur Dalam Melaksanakan Tugas',
-        'Menguasai Semua Bahasa Pemograman Yang Ada Di Dunia',
-        'Dapat Bekerja Kapan Pun Yang Dibutuhkan Oleh Dosen Pembimbing',
-      ],
-      benefits: ['Mendapatkan Uang 1 Milliar', 'Nilai Matakuliah Pasti A++'],
-    ),
-
-    // Dummy data - CertificatePortfolio
-    CertificatePortfolio(
-      id: '2',
-      title: 'Certified IBM AI Software Engineer',
-      issuer: 'IBM',
-      startDate: '10 Oktober 2025',
-      endDate: '10 Oktober 2027',
-      skills: [
-        'Problem Solving',
-        'Leadership',
-        'Advanced Python',
-        'Data Analytics',
-      ],
-      certificateFile: 'IMG-21231.pdf',
-    ),
-
-    // Dummy data - OrganizationPortfolio
-    OrganizationPortfolio(
-      id: '3',
-      title: 'Himpunan Mahasiswa Elektronika',
-      position: 'Ketua Divisi Teknologi',
-      duration: '1 Tahun 6 Bulan',
-      description: '''Kegiatan Dan Kontribusi:
-
-1. Mengatur Jalannya Acara Greet & Meet Mas Amba Dengan Mahasiswa Himanika
-
-2. Memberikan Kata Sambutan Pada Acara Pengajian Bahlil Dengan Tema "Menjawab Pertanyaan Munkar-Nakir Dengan Bantuan AI"
-
-3. Kolaborasi Dengan Direktur Pertamina Untuk Melakukan Kegiatan Bermain Uno Truth & Dare Dimana Yang Kalah Akan Melakukan Korupsi 1000 Triliun
-
-4. Memimpin Kegiatan Ospek Maba Elektronika Tahun Masuk 2025 Yang Dilakukan Pada Tanggal 32 September 2025 Di Lantai 1 Perpustakaan UNP''',
-    ),
-  ];
-
   // Getter untuk list portfolio
   List<PortfolioItem> get portfolioItems => _portfolioItems;
 
-  // Load all portfolios from Supabase
-  Future<void> loadPortfolios() async {
+  // Load portfolios from Supabase for specific user
+  Future<void> loadPortfolios({String? userId}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // Fetch all portfolio types
-      final projects = await _supabaseService.getAllPortfolioProjects();
-      final certificates = await _supabaseService.getAllPortfolioCertificates();
+      // If no userId provided, return empty list
+      if (userId == null) {
+        _portfolioItems = [];
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // Fetch portfolio by user ID
+      final projects = await _supabaseService.getPortfolioProjectsByUserId(
+        userId,
+      );
+      final certificates = await _supabaseService
+          .getPortfolioCertificatesByUserId(userId);
       final organizations = await _supabaseService
-          .getAllPortfolioOrganizations();
+          .getPortfolioOrganizationsByUserId(userId);
 
       // Convert to objects
       final List<PortfolioItem> items = [];
@@ -231,8 +190,8 @@ class PortfolioProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Gagal memuat portfolio: $e';
       print(_errorMessage);
-      // Fallback to dummy data
-      _portfolioItems = _dummyPortfolioItems;
+      // On error, show empty list (not dummy data)
+      _portfolioItems = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -240,10 +199,11 @@ class PortfolioProvider extends ChangeNotifier {
   }
 
   // Method untuk menambahkan portfolio
-  Future<void> addPortfolio(PortfolioItem item) async {
+  Future<void> addPortfolio(PortfolioItem item, String userId) async {
     try {
       if (item is ProjectPortfolio) {
         final response = await _supabaseService.addPortfolioProject(
+          userId: userId,
           title: item.title,
           lecturer: item.lecturer,
           deadline: item.deadline,
@@ -256,6 +216,7 @@ class PortfolioProvider extends ChangeNotifier {
         }
       } else if (item is CertificatePortfolio) {
         final response = await _supabaseService.addPortfolioCertificate(
+          userId: userId,
           title: item.title,
           issuer: item.issuer,
           startDate: item.startDate,
@@ -268,6 +229,7 @@ class PortfolioProvider extends ChangeNotifier {
         }
       } else if (item is OrganizationPortfolio) {
         final response = await _supabaseService.addPortfolioOrganization(
+          userId: userId,
           title: item.title,
           position: item.position,
           duration: item.duration,
