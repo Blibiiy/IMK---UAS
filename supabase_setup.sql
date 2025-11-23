@@ -2,6 +2,12 @@
 -- SQL SCRIPT UNTUK SETUP DATABASE SUPABASE
 -- UNIWORK PROJECT
 -- ============================================
+-- 
+-- ⚠️ CATATAN PENTING:
+-- File ini adalah versi LAMA (hanya setup tabel projects)
+-- Gunakan file: complete_supabase_setup.sql
+-- untuk setup lengkap dengan users, applicants, dan members
+-- ============================================
 
 -- 1. CREATE TABLE PROJECTS
 CREATE TABLE IF NOT EXISTS projects (

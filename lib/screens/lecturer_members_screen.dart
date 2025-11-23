@@ -6,14 +6,30 @@ import '../providers/project_provider.dart';
 import 'lecturer_applicants_screen.dart';
 import 'student_profile_detail_screen.dart';
 
-class LecturerMembersScreen extends StatelessWidget {
+class LecturerMembersScreen extends StatefulWidget {
   final String projectId;
 
   const LecturerMembersScreen({super.key, required this.projectId});
 
   @override
+  State<LecturerMembersScreen> createState() => _LecturerMembersScreenState();
+}
+
+class _LecturerMembersScreenState extends State<LecturerMembersScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load members from database when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjectProvider>().loadMembers(widget.projectId);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final project = context.watch<ProjectProvider>().getProjectById(projectId);
+    final project = context.watch<ProjectProvider>().getProjectById(
+      widget.projectId,
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -27,7 +43,11 @@ class LecturerMembersScreen extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    icon: SvgPicture.asset('assets/logos/back.svg', width: 24, height: 24),
+                    icon: SvgPicture.asset(
+                      'assets/logos/back.svg',
+                      width: 24,
+                      height: 24,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
@@ -36,8 +56,9 @@ class LecturerMembersScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              LecturerApplicantsScreen(projectId: projectId),
+                          builder: (_) => LecturerApplicantsScreen(
+                            projectId: widget.projectId,
+                          ),
                         ),
                       );
                     },
@@ -47,11 +68,17 @@ class LecturerMembersScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text(
                       'Pendaftar',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -61,36 +88,36 @@ class LecturerMembersScreen extends StatelessWidget {
                 child: project == null
                     ? const Center(child: Text('Project tidak ditemukan'))
                     : project.members.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'Belum Ada Anggota',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: project.members.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 16),
-                            itemBuilder: (context, index) {
-                              final member = project.members[index];
-                              return InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => StudentProfileDetailScreen(
-                                        student: member,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: _MemberCard(member: member),
+                    ? const Center(
+                        child: Text(
+                          'Belum Ada Anggota',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: project.members.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        itemBuilder: (context, index) {
+                          final member = project.members[index];
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => StudentProfileDetailScreen(
+                                    student: member,
+                                  ),
+                                ),
                               );
                             },
-                          ),
+                            child: _MemberCard(member: member),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -133,10 +160,7 @@ class _MemberCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   member.program,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black87,
-                  ),
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
                 ),
               ],
             ),

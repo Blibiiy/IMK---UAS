@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/project_provider.dart';
+import '../providers/user_provider.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/success_dialog.dart';
 
@@ -10,6 +11,16 @@ class ProjectDetailScreen extends StatelessWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
 
   void _showConfirmationDialog(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final currentUser = userProvider.currentUser;
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anda harus login terlebih dahulu')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -17,15 +28,61 @@ class ProjectDetailScreen extends StatelessWidget {
           title: 'Apakah Anda Yakin?',
           description:
               'Tekan "Ya" jika anda yakin untuk mendaftarkan diri ke project, "Tidak" jika tidak ingin',
-          onConfirm: () {
-            Provider.of<ProjectProvider>(context, listen: false).registerProject(projectId);
+          onConfirm: () async {
+            // Show loading
             showDialog(
               context: context,
               barrierDismissible: false,
-              builder: (_) => const SuccessDialog(
-                message: 'Pendaftaran project berhasil dilakukan!',
-              ),
+              builder: (_) => const Center(child: CircularProgressIndicator()),
             );
+
+            try {
+              await Provider.of<ProjectProvider>(
+                context,
+                listen: false,
+              ).registerProject(projectId, currentUser.id);
+
+              if (!context.mounted) return;
+              Navigator.pop(context); // Close loading
+
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const SuccessDialog(
+                  message: 'Pendaftaran project berhasil dilakukan!',
+                ),
+              );
+            } catch (e) {
+              if (!context.mounted) return;
+              Navigator.pop(context); // Close loading
+
+              // Parse error message untuk tampilkan yang lebih user-friendly
+              String errorMessage = 'Gagal mendaftar ke project';
+              final errorString = e.toString();
+
+              if (errorMessage.contains('sudah mendaftar')) {
+                errorMessage = 'Anda sudah mendaftar ke project ini sebelumnya';
+              } else if (errorString.contains('duplicate key') ||
+                  errorString.contains('23505')) {
+                errorMessage = 'Anda sudah mendaftar ke project ini sebelumnya';
+              } else if (errorString.contains('Exception:')) {
+                // Extract message from Exception
+                final match = RegExp(
+                  r'Exception: (.+)',
+                ).firstMatch(errorString);
+                if (match != null) {
+                  errorMessage = match.group(1) ?? errorMessage;
+                }
+              }
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errorMessage),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
           },
           confirmText: 'Ya',
           cancelText: 'Tidak',
@@ -37,10 +94,17 @@ class ProjectDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final project = Provider.of<ProjectProvider>(context).getProjectById(projectId);
+    final project = Provider.of<ProjectProvider>(
+      context,
+    ).getProjectById(projectId);
     if (project == null) {
       return Scaffold(
-        appBar: AppBar(leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context))),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
         body: const Center(child: Text('Project tidak ditemukan')),
       );
     }
@@ -48,54 +112,118 @@ class ProjectDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: SvgPicture.asset('assets/logos/back.svg', width: 24, height: 24, colorFilter: ColorFilter.mode(cs.onSurface, BlendMode.srcIn)),
+          icon: SvgPicture.asset(
+            'assets/logos/back.svg',
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(cs.onSurface, BlendMode.srcIn),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(project.title, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: cs.onSurface)),
-          const SizedBox(height: 8),
-          Text(project.supervisor, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.onSurface)),
-          const SizedBox(height: 4),
-          Text('Deadline: ${project.deadline}', style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant)),
-          const SizedBox(height: 16),
-          Divider(color: cs.outline, thickness: 1),
-          const SizedBox(height: 16),
-          Text(project.description, style: TextStyle(fontSize: 14, height: 1.5, color: cs.onSurface)),
-          const SizedBox(height: 24),
-          Text('Persyaratan Project :', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cs.onSurface)),
-          const SizedBox(height: 12),
-          ...project.requirements.map((requirement) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(requirement, style: TextStyle(fontSize: 14, height: 1.5, color: cs.onSurface)),
-              )),
-          const SizedBox(height: 24),
-          Text('Manfaat Melakukan Project :', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cs.onSurface)),
-          const SizedBox(height: 12),
-          ...project.benefits.map((benefit) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(benefit, style: TextStyle(fontSize: 14, height: 1.5, color: cs.onSurface)),
-              )),
-          const SizedBox(height: 40),
-          Row(children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                child: const Text('Chat'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              project.title,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: project.status == ProjectStatus.tersedia ? () => _showConfirmationDialog(context) : null,
-                child: const Text('Daftar >>'),
+            const SizedBox(height: 8),
+            Text(
+              project.supervisor,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: cs.onSurface,
               ),
             ),
-          ]),
-          const SizedBox(height: 24),
-        ]),
+            const SizedBox(height: 4),
+            Text(
+              'Deadline: ${project.deadline}',
+              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            Divider(color: cs.outline, thickness: 1),
+            const SizedBox(height: 16),
+            Text(
+              project.description,
+              style: TextStyle(fontSize: 14, height: 1.5, color: cs.onSurface),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Persyaratan Project :',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...project.requirements.map(
+              (requirement) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  requirement,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: cs.onSurface,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Manfaat Melakukan Project :',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...project.benefits.map(
+              (benefit) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  benefit,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: cs.onSurface,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {},
+                    child: const Text('Chat'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: project.status == ProjectStatus.tersedia
+                        ? () => _showConfirmationDialog(context)
+                        : null,
+                    child: const Text('Daftar >>'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }

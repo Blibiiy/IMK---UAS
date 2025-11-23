@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/project_provider.dart';
+import '../providers/user_provider.dart';
 import 'project_detail_screen.dart';
 import 'chat_list_screen.dart';
 import 'profile_screen.dart';
@@ -45,6 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final userProvider = context.watch<UserProvider>();
+    final currentUser = userProvider.currentUser;
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -54,10 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
               decoration: AppTheme.headerDecoration(cs),
-              child: const StudentHeaderCard(
-                name: 'Muhammad Isra Al Fattah',
-                program: 'Prodi Informatika (S1)',
-                imageUrl: 'https://placehold.co/100x100/E0E0E0/E0E0E0',
+              child: StudentHeaderCard(
+                name: currentUser?.fullName ?? 'User',
+                program: currentUser?.program ?? 'Program Studi',
+                imageUrl:
+                    currentUser?.avatarUrl ??
+                    'https://placehold.co/100x100/E0E0E0/E0E0E0',
               ),
             ),
             const SizedBox(height: 12),

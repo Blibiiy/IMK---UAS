@@ -3,11 +3,65 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../providers/project_provider.dart';
 import '../providers/portfolio_provider.dart';
+import '../services/supabase_service.dart';
 
-class StudentProfileDetailScreen extends StatelessWidget {
+class StudentProfileDetailScreen extends StatefulWidget {
   final Student student;
 
   const StudentProfileDetailScreen({super.key, required this.student});
+
+  @override
+  State<StudentProfileDetailScreen> createState() =>
+      _StudentProfileDetailScreenState();
+}
+
+class _StudentProfileDetailScreenState
+    extends State<StudentProfileDetailScreen> {
+  final SupabaseService _supabaseService = SupabaseService();
+  List<PortfolioItem> _portfolioItems = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPortfolio();
+  }
+
+  Future<void> _loadPortfolio() async {
+    try {
+      setState(() => _isLoading = true);
+
+      // Load all three types of portfolio
+      final projects = await _supabaseService.getPortfolioProjectsByUserId(
+        widget.student.id,
+      );
+      final certificates = await _supabaseService
+          .getPortfolioCertificatesByUserId(widget.student.id);
+      final organizations = await _supabaseService
+          .getPortfolioOrganizationsByUserId(widget.student.id);
+
+      // Convert to portfolio items
+      final List<PortfolioItem> items = [];
+
+      for (final project in projects) {
+        items.add(ProjectPortfolio.fromJson(project));
+      }
+      for (final cert in certificates) {
+        items.add(CertificatePortfolio.fromJson(cert));
+      }
+      for (final org in organizations) {
+        items.add(OrganizationPortfolio.fromJson(org));
+      }
+
+      setState(() {
+        _portfolioItems = items;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading portfolio: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,81 +70,98 @@ class StudentProfileDetailScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Header abu-abu dengan back (kiri) + konten di TENGAH (avatar, nama, prodi)
-            Container(
-              width: double.infinity,
-              color: const Color(0xFFE0E0E0),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              child: Stack(
-                children: [
-                  // Back di kiri
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: IconButton(
-                      icon: SvgPicture.asset('assets/logos/back.svg', width: 24, height: 24),
-                      onPressed: () => Navigator.pop(context),
-                    ),
+            // Back button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  icon: SvgPicture.asset(
+                    'assets/logos/back.svg',
+                    width: 24,
+                    height: 24,
                   ),
-                  // Konten dipusatkan
-                  Align(
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 8),
-                        CircleAvatar(
-                          radius: 44,
-                          backgroundImage: NetworkImage(student.avatarUrl),
-                          backgroundColor: Colors.white,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          student.name,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          student.program,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-                  ),
-                ],
+                  onPressed: () => Navigator.pop(context),
+                ),
               ),
             ),
 
-            // Body berisi Portfolio (judul dan isi dipusatkan sesuai permintaan)
+            // Body berisi Card Identitas + Portfolio
             Expanded(
               child: SingleChildScrollView(
-                child: Container(
-                  width: double.infinity,
-                  color: const Color(0xFFF5F5F5),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Judul di TENGAH
-                        const Text(
-                          'Portfolio',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      // Card Identitas Mahasiswa (sama seperti di profil)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0E0E0),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        const SizedBox(height: 16),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 30,
+                              backgroundImage: NetworkImage(
+                                widget.student.avatarUrl,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.student.name,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.student.program,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
 
-                        if (student.portfolio.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
+                      // Portfolio Section
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Portfolio',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      if (_isLoading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (_portfolioItems.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
                             child: Text(
                               'Belum ada portfolio',
                               textAlign: TextAlign.center,
@@ -99,18 +170,22 @@ class StudentProfileDetailScreen extends StatelessWidget {
                                 color: Colors.grey,
                               ),
                             ),
-                          )
-                        else
-                          Column(
-                            children: student.portfolio
-                                .map((item) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 12.0),
-                                      child: _PortfolioCompactCard(item: item),
-                                    ))
-                                .toList(),
                           ),
-                      ],
-                    ),
+                        )
+                      else
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _portfolioItems.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final item = _portfolioItems[index];
+                            return _PortfolioCompactCard(item: item);
+                          },
+                        ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
               ),
@@ -127,91 +202,61 @@ class _PortfolioCompactCard extends StatelessWidget {
 
   const _PortfolioCompactCard({required this.item});
 
-  @override
-  Widget build(BuildContext context) {
-    // Kartu abu-abu membulat sesuai mockup
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFBDBDBD),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: _buildInner(),
-    );
-  }
-
-  Widget _buildInner() {
+  String _getSubText() {
     if (item is ProjectPortfolio) {
       final p = item as ProjectPortfolio;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _truncate(p.title),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Dosen Pembimbing: ${p.lecturer}',
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Tanggal Selesai: ${p.deadline}',
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
-          ),
-        ],
-      );
+      return 'Dosen Pembimbing: ${p.lecturer}';
     } else if (item is CertificatePortfolio) {
       final c = item as CertificatePortfolio;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _truncate(c.title),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Diterbitkan Oleh: ${c.issuer}',
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Tanggal Berlaku: ${c.startDate} - ${c.endDate}',
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
-          ),
-        ],
-      );
+      return 'Diterbitkan Oleh: ${c.issuer}';
     } else if (item is OrganizationPortfolio) {
       final o = item as OrganizationPortfolio;
-      return Column(
+      return 'Posisi: ${o.position}';
+    }
+    return '';
+  }
+
+  String _getExtraInfo() {
+    if (item is ProjectPortfolio) {
+      final p = item as ProjectPortfolio;
+      return 'Tanggal Selesai: ${p.deadline}';
+    } else if (item is CertificatePortfolio) {
+      final c = item as CertificatePortfolio;
+      return 'Berlaku: ${c.startDate} - ${c.endDate}';
+    } else if (item is OrganizationPortfolio) {
+      final o = item as OrganizationPortfolio;
+      return 'Masa Jabatan: ${o.duration}';
+    }
+    return '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0E0E0),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _truncate(o.title),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            item.title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
-            'Posisi: ${o.position}',
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
+            _getSubText(),
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
-            'Masa Jabatan: ${o.duration}',
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
+            _getExtraInfo(),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ],
-      );
-    } else {
-      return const Text('Unknown portfolio type');
-    }
-  }
-
-  String _truncate(String text, {int max = 28}) {
-    if (text.length <= max) return text;
-    return '${text.substring(0, max)}..';
+      ),
+    );
   }
 }

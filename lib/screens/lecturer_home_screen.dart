@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/project_provider.dart';
+import '../providers/user_provider.dart';
 import 'lecturer_project_detail_screen.dart';
 import 'lecturer_profile_screen.dart';
 import 'chat_list_screen.dart';
@@ -56,6 +57,9 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final userProvider = context.watch<UserProvider>();
+    final currentUser = userProvider.currentUser;
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: _onAddProject,
@@ -101,10 +105,14 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
               decoration: AppTheme.headerDecoration(cs),
-              child: const _LecturerHeaderCard(
-                name: 'Muhammad Isra Alfattah',
-                program: 'Prodi Roamer (S5)',
-                imageUrl: 'https://placehold.co/100x100/E0E0E0/E0E0E0',
+              child: _LecturerHeaderCard(
+                name: currentUser?.fullName ?? 'Dosen',
+                program: currentUser?.role == 'dosen'
+                    ? 'Dosen'
+                    : (currentUser?.program ?? ''),
+                imageUrl:
+                    currentUser?.avatarUrl ??
+                    'https://placehold.co/100x100/E0E0E0/E0E0E0',
               ),
             ),
             const SizedBox(height: 12),

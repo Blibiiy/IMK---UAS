@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/project_provider.dart';
+import '../providers/user_provider.dart';
 import 'lecturer_project_detail_screen.dart';
 import 'lecturer_home_screen.dart';
 import 'chat_list_screen.dart';
@@ -36,11 +37,15 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
   }
 
   void _onLogout() {
+    context.read<UserProvider>().logout();
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final currentUser = userProvider.currentUser;
+
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: BottomNavigationBar(
@@ -57,7 +62,10 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
               'assets/logos/homeinactive.svg',
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                Colors.black,
+                BlendMode.srcIn,
+              ),
             ),
             label: 'Home',
           ),
@@ -66,7 +74,10 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
               'assets/logos/chat.svg',
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                Colors.black,
+                BlendMode.srcIn,
+              ),
             ),
             label: 'Chat',
           ),
@@ -75,7 +86,10 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
               'assets/logos/profileactive.svg',
               width: 24,
               height: 24,
-              colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                Colors.black,
+                BlendMode.srcIn,
+              ),
             ),
             label: 'Profile',
           ),
@@ -95,28 +109,31 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                 ),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 30,
                       backgroundImage: NetworkImage(
-                        'https://placehold.co/100x100/E0E0E0/E0E0E0',
+                        currentUser?.avatarUrl ??
+                            'https://placehold.co/100x100/E0E0E0/E0E0E0',
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
-                            'Muhammad Isra Alfattah',
-                            style: TextStyle(
+                            currentUser?.fullName ?? 'Dosen',
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'Prodi Roamer (S5)',
-                            style: TextStyle(
+                            currentUser?.role == 'dosen'
+                                ? 'Dosen'
+                                : (currentUser?.program ?? ''),
+                            style: const TextStyle(
                               fontSize: 14,
                               color: Colors.black87,
                             ),
@@ -151,7 +168,10 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                             padding: EdgeInsets.symmetric(vertical: 40),
                             child: Text(
                               'Belum ada project',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         );
@@ -186,14 +206,21 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                 onTap: _onLogout,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFB0B0B0),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
                     children: [
-                      SvgPicture.asset('assets/logos/logout.svg', width: 24, height: 24),
+                      SvgPicture.asset(
+                        'assets/logos/logout.svg',
+                        width: 24,
+                        height: 24,
+                      ),
                       const SizedBox(width: 12),
                       const Text(
                         'Logout',
@@ -201,7 +228,7 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -239,20 +266,16 @@ class _HistoryProjectCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              )),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Text(
             description,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.4,
-            ),
+            style: const TextStyle(fontSize: 14, height: 1.4),
           ),
           const SizedBox(height: 12),
           Row(
@@ -277,14 +300,11 @@ class _HistoryProjectCard extends StatelessWidget {
                 },
                 child: const Text(
                   'Detail >>',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
-              )
+              ),
             ],
-          )
+          ),
         ],
       ),
     );

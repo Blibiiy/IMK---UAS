@@ -36,6 +36,18 @@ class Student {
       portfolio: portfolio ?? this.portfolio,
     );
   }
+
+  // Factory method from JSON (from Supabase users table)
+  factory Student.fromJson(Map<String, dynamic> json) {
+    return Student(
+      id: json['id'].toString(),
+      name: json['full_name'] ?? '',
+      program: json['program'] ?? '',
+      avatarUrl:
+          json['avatar_url'] ?? 'https://placehold.co/100x100/E0E0E0/E0E0E0',
+      portfolio: [], // Portfolio will be loaded separately if needed
+    );
+  }
 }
 
 class Project {
@@ -330,19 +342,28 @@ class ProjectProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> registerProject(String projectId) async {
+  Future<void> registerProject(String projectId, String studentId) async {
     try {
-      await _supabaseService.updateProjectStatus(
-        id: projectId,
-        status: 'diproses',
+      // Cek apakah sudah pernah mendaftar
+      final alreadyApplied = await _supabaseService.isAlreadyApplied(
+        projectId: projectId,
+        studentId: studentId,
       );
 
-      final idx = _projects.indexWhere((p) => p.id == projectId);
-      if (idx != -1) {
-        final old = _projects[idx];
-        _projects[idx] = old.copyWith(status: ProjectStatus.diproses);
-        notifyListeners();
+      if (alreadyApplied) {
+        throw Exception('Anda sudah mendaftar ke project ini sebelumnya');
       }
+
+      // Tambahkan student ke tabel applicants, TIDAK mengubah status project
+      await _supabaseService.addApplicant(
+        projectId: projectId,
+        studentId: studentId,
+      );
+
+      // Status project tetap 'tersedia', hanya dosen yang bisa mengubah status
+      // dengan menutup pendaftaran secara manual
+
+      notifyListeners();
     } catch (e) {
       _errorMessage = 'Gagal mendaftar project: $e';
       print(_errorMessage);
@@ -446,42 +467,69 @@ class ProjectProvider extends ChangeNotifier {
   }
 
   // ====== Applicants & Members ======
-  void acceptApplicant(String projectId, String studentId) {
-    final idx = _projects.indexWhere((p) => p.id == projectId);
-    if (idx == -1) return;
-    final project = _projects[idx];
 
-    final applicantIndex = project.applicants.indexWhere(
-      (student) => student.id == studentId,
-    );
-    if (applicantIndex == -1) return;
+  /// Load applicants for a specific project from database
+  Future<void> loadApplicants(String projectId) async {
+    try {
+      final data = await _supabaseService.getProjectApplicants(projectId);
+      final applicants = data.map((json) => Student.fromJson(json)).toList();
 
-    final student = project.applicants[applicantIndex];
-    final updatedApplicants = List<Student>.from(project.applicants)
-      ..removeAt(applicantIndex);
-    final updatedMembers = List<Student>.from(project.members)..add(student);
-
-    _projects[idx] = project.copyWith(
-      applicants: updatedApplicants,
-      members: updatedMembers,
-      editedAt: DateTime.now(),
-    );
-    notifyListeners();
+      final idx = _projects.indexWhere((p) => p.id == projectId);
+      if (idx != -1) {
+        _projects[idx] = _projects[idx].copyWith(applicants: applicants);
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error loading applicants: $e');
+    }
   }
 
-  void rejectApplicant(String projectId, String studentId) {
-    final idx = _projects.indexWhere((p) => p.id == projectId);
-    if (idx == -1) return;
-    final project = _projects[idx];
+  /// Load members for a specific project from database
+  Future<void> loadMembers(String projectId) async {
+    try {
+      final data = await _supabaseService.getProjectMembers(projectId);
+      final members = data.map((json) => Student.fromJson(json)).toList();
 
-    final updatedApplicants = project.applicants
-        .where((s) => s.id != studentId)
-        .toList();
+      final idx = _projects.indexWhere((p) => p.id == projectId);
+      if (idx != -1) {
+        _projects[idx] = _projects[idx].copyWith(members: members);
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error loading members: $e');
+    }
+  }
 
-    _projects[idx] = project.copyWith(
-      applicants: updatedApplicants,
-      editedAt: DateTime.now(),
-    );
-    notifyListeners();
+  Future<void> acceptApplicant(String projectId, String studentId) async {
+    try {
+      // Update database
+      await _supabaseService.acceptApplicant(
+        projectId: projectId,
+        studentId: studentId,
+      );
+
+      // Reload both lists from database
+      await loadApplicants(projectId);
+      await loadMembers(projectId);
+    } catch (e) {
+      print('Error accepting applicant: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> rejectApplicant(String projectId, String studentId) async {
+    try {
+      // Update database
+      await _supabaseService.rejectApplicant(
+        projectId: projectId,
+        studentId: studentId,
+      );
+
+      // Reload applicants list from database
+      await loadApplicants(projectId);
+    } catch (e) {
+      print('Error rejecting applicant: $e');
+      rethrow;
+    }
   }
 }

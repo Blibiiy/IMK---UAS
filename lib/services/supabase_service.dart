@@ -8,6 +8,44 @@ class SupabaseService {
 
   SupabaseClient get client => Supabase.instance.client;
 
+  // ============ USER AUTHENTICATION ============
+
+  /// Login user (simple auth without Supabase Auth for demo)
+  Future<Map<String, dynamic>?> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await client
+          .from('users')
+          .select()
+          .eq('email', email)
+          .eq('password', password)
+          .maybeSingle();
+
+      return response;
+    } catch (e) {
+      print('Error login: $e');
+      return null;
+    }
+  }
+
+  /// Get user by ID
+  Future<Map<String, dynamic>?> getUserById(String userId) async {
+    try {
+      final response = await client
+          .from('users')
+          .select()
+          .eq('id', userId)
+          .single();
+
+      return response;
+    } catch (e) {
+      print('Error fetching user: $e');
+      return null;
+    }
+  }
+
   // ============ PROJECT CRUD OPERATIONS ============
 
   /// Fetch all projects from database
@@ -162,38 +200,145 @@ class SupabaseService {
   }
 
   // ============ APPLICANTS & MEMBERS OPERATIONS ============
-  // Note: Ini akan dikembangkan lebih lanjut sesuai dengan struktur tabel
-  // yang Anda buat di Supabase untuk mengelola applicants dan members
 
-  /// Get applicants for a project
-  Future<List<Map<String, dynamic>>> getProjectApplicants(
-    String projectId,
-  ) async {
+  /// Check if student already applied to project
+  Future<bool> isAlreadyApplied({
+    required String projectId,
+    required String studentId,
+  }) async {
     try {
       final response = await client
           .from(SupabaseConfig.applicantsTable)
           .select()
-          .eq('project_id', projectId);
+          .eq('project_id', projectId)
+          .eq('student_id', studentId)
+          .maybeSingle();
 
-      return List<Map<String, dynamic>>.from(response);
+      return response != null;
+    } catch (e) {
+      print('Error checking applicant: $e');
+      return false;
+    }
+  }
+
+  /// Add applicant to project
+  Future<Map<String, dynamic>?> addApplicant({
+    required String projectId,
+    required String studentId,
+  }) async {
+    try {
+      final response = await client
+          .from(SupabaseConfig.applicantsTable)
+          .insert({
+            'project_id': projectId,
+            'student_id': studentId,
+            'status': 'pending',
+          })
+          .select()
+          .single();
+
+      return response;
+    } catch (e) {
+      print('Error adding applicant: $e');
+      rethrow;
+    }
+  }
+
+  /// Get applicants for a project with user details
+  Future<List<Map<String, dynamic>>> getProjectApplicants(
+    String projectId,
+  ) async {
+    try {
+      // Get applicants with status 'pending'
+      final applicants = await client
+          .from(SupabaseConfig.applicantsTable)
+          .select('student_id')
+          .eq('project_id', projectId)
+          .eq('status', 'pending');
+
+      if (applicants.isEmpty) return [];
+
+      // Get user details for each applicant
+      final studentIds = applicants
+          .map((a) => a['student_id'] as String)
+          .toList();
+
+      final users = await client
+          .from('users')
+          .select()
+          .inFilter('id', studentIds);
+
+      return List<Map<String, dynamic>>.from(users);
     } catch (e) {
       print('Error fetching applicants: $e');
       return [];
     }
   }
 
-  /// Get members for a project
+  /// Get members for a project with user details
   Future<List<Map<String, dynamic>>> getProjectMembers(String projectId) async {
     try {
-      final response = await client
+      // Get members
+      final members = await client
           .from(SupabaseConfig.membersTable)
-          .select()
+          .select('student_id')
           .eq('project_id', projectId);
 
-      return List<Map<String, dynamic>>.from(response);
+      if (members.isEmpty) return [];
+
+      // Get user details for each member
+      final studentIds = members.map((m) => m['student_id'] as String).toList();
+
+      final users = await client
+          .from('users')
+          .select()
+          .inFilter('id', studentIds);
+
+      return List<Map<String, dynamic>>.from(users);
     } catch (e) {
       print('Error fetching members: $e');
       return [];
+    }
+  }
+
+  /// Accept applicant (move from applicants to members)
+  Future<void> acceptApplicant({
+    required String projectId,
+    required String studentId,
+  }) async {
+    try {
+      // Update applicant status to 'accepted'
+      await client
+          .from(SupabaseConfig.applicantsTable)
+          .update({'status': 'accepted'})
+          .eq('project_id', projectId)
+          .eq('student_id', studentId);
+
+      // Add to members table
+      await client.from(SupabaseConfig.membersTable).insert({
+        'project_id': projectId,
+        'student_id': studentId,
+      });
+    } catch (e) {
+      print('Error accepting applicant: $e');
+      rethrow;
+    }
+  }
+
+  /// Reject applicant
+  Future<void> rejectApplicant({
+    required String projectId,
+    required String studentId,
+  }) async {
+    try {
+      await client
+          .from(SupabaseConfig.applicantsTable)
+          .update({'status': 'rejected'})
+          .eq('project_id', projectId)
+          .eq('student_id', studentId);
+    } catch (e) {
+      print('Error rejecting applicant: $e');
+      rethrow;
     }
   }
 
@@ -214,6 +359,24 @@ class SupabaseService {
     }
   }
 
+  /// Fetch portfolio projects by user ID
+  Future<List<Map<String, dynamic>>> getPortfolioProjectsByUserId(
+    String userId,
+  ) async {
+    try {
+      final response = await client
+          .from(SupabaseConfig.portfolioProjectsTable)
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error fetching portfolio projects by user: $e');
+      return [];
+    }
+  }
+
   /// Fetch all portfolio certificates
   Future<List<Map<String, dynamic>>> getAllPortfolioCertificates() async {
     try {
@@ -229,6 +392,24 @@ class SupabaseService {
     }
   }
 
+  /// Fetch portfolio certificates by user ID
+  Future<List<Map<String, dynamic>>> getPortfolioCertificatesByUserId(
+    String userId,
+  ) async {
+    try {
+      final response = await client
+          .from(SupabaseConfig.portfolioCertificatesTable)
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error fetching portfolio certificates by user: $e');
+      return [];
+    }
+  }
+
   /// Fetch all portfolio organizations
   Future<List<Map<String, dynamic>>> getAllPortfolioOrganizations() async {
     try {
@@ -241,6 +422,24 @@ class SupabaseService {
     } catch (e) {
       print('Error fetching portfolio organizations: $e');
       rethrow;
+    }
+  }
+
+  /// Fetch portfolio organizations by user ID
+  Future<List<Map<String, dynamic>>> getPortfolioOrganizationsByUserId(
+    String userId,
+  ) async {
+    try {
+      final response = await client
+          .from(SupabaseConfig.portfolioOrganizationsTable)
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error fetching portfolio organizations by user: $e');
+      return [];
     }
   }
 

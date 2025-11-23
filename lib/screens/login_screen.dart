@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/role_toggle_button.dart';
 import '../widgets/custom_login_button.dart';
+import '../providers/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,21 +13,51 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   String _selectedRole = 'Mahasiswa';
-  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _idController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (_selectedRole == 'Dosen') {
-      Navigator.pushNamed(context, '/lecturer-home');
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email dan password harus diisi')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final userProvider = context.read<UserProvider>();
+    final success = await userProvider.login(email: email, password: password);
+
+    setState(() => _isLoading = false);
+
+    if (!mounted) return;
+
+    if (success) {
+      final user = userProvider.currentUser;
+      if (user?.role == 'dosen') {
+        Navigator.pushReplacementNamed(context, '/lecturer-home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } else {
-      Navigator.pushNamed(context, '/home');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(userProvider.errorMessage ?? 'Login gagal'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -49,15 +81,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 RoleToggleButton(
                   selectedRole: _selectedRole,
-                  onRoleChanged: (String newRole) => setState(() => _selectedRole = newRole),
+                  onRoleChanged: (String newRole) =>
+                      setState(() => _selectedRole = newRole),
                 ),
                 const SizedBox(height: 40),
-                Image.asset('assets/images/SplashImage.png', width: 140, height: 140),
+                Image.asset(
+                  'assets/images/SplashImage.png',
+                  width: 140,
+                  height: 140,
+                ),
                 const SizedBox(height: 36),
                 _buildField(
                   context,
-                  label: _selectedRole == 'Mahasiswa' ? 'NIM' : 'NIP',
-                  controller: _idController,
+                  label: 'EMAIL',
+                  controller: _emailController,
+                  hint: 'Contoh: isra@student.com',
                 ),
                 const SizedBox(height: 16),
                 _buildField(
@@ -65,9 +103,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: 'PASSWORD',
                   controller: _passwordController,
                   obscure: true,
+                  hint: 'Masukkan password',
                 ),
-                const SizedBox(height: 32),
-                CustomLoginButton(onPressed: _handleLogin),
+                const SizedBox(height: 8),
+                Text(
+                  'Demo: isra@student.com / aldi@student.com / budi.santoso@lecturer.com',
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : CustomLoginButton(onPressed: _handleLogin),
               ],
             ),
           ),
@@ -76,18 +123,36 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildField(BuildContext context,
-      {required String label, required TextEditingController controller, bool obscure = false}) {
+  Widget _buildField(
+    BuildContext context, {
+    required String label,
+    required TextEditingController controller,
+    bool obscure = false,
+    String? hint,
+  }) {
     final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: cs.onSurface)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: cs.onSurface,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: obscure,
-          decoration: const InputDecoration(),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontWeight: FontWeight.w300,
+            ),
+          ),
         ),
       ],
     );

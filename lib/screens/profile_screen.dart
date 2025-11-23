@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/portfolio_provider.dart';
+import '../providers/user_provider.dart';
 import '../screens/home_screen.dart';
 import '../screens/chat_list_screen.dart';
 import 'portfolio_detail_screen.dart';
@@ -48,6 +49,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final currentUser = userProvider.currentUser;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -58,10 +62,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               const SizedBox(height: 50),
               // Student Header Card (reusable component from HomeScreen)
-              const StudentHeaderCard(
-                name: 'Muhammad Isra Alfattah',
-                program: 'Prodi Informatika S1',
-                imageUrl: 'https://placehold.co/100x100/E0E0E0/E0E0E0',
+              StudentHeaderCard(
+                name: currentUser?.fullName ?? 'User',
+                program: currentUser?.program ?? 'Program Studi',
+                imageUrl:
+                    currentUser?.avatarUrl ??
+                    'https://placehold.co/100x100/E0E0E0/E0E0E0',
               ),
               const SizedBox(height: 24),
               // Portfolio Header with + button
@@ -133,6 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               GestureDetector(
                 onTap: () {
                   // Handle logout
+                  context.read<UserProvider>().logout();
                   Navigator.pushNamedAndRemoveUntil(
                     context,
                     '/login',

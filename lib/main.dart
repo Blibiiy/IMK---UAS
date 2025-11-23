@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'providers/project_provider.dart';
 import 'providers/portfolio_provider.dart';
+import 'providers/user_provider.dart';
 import 'config/supabase_config.dart';
 
 import 'theme/app_theme.dart';
@@ -55,6 +56,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProjectProvider()),
         ChangeNotifierProvider(create: (_) => PortfolioProvider()),
       ],

@@ -6,22 +6,73 @@ import '../providers/project_provider.dart';
 import 'lecturer_members_screen.dart';
 import 'student_profile_detail_screen.dart';
 
-class LecturerApplicantsScreen extends StatelessWidget {
+class LecturerApplicantsScreen extends StatefulWidget {
   final String projectId;
 
   const LecturerApplicantsScreen({super.key, required this.projectId});
 
-  void _accept(BuildContext context, String studentId) {
-    context.read<ProjectProvider>().acceptApplicant(projectId, studentId);
+  @override
+  State<LecturerApplicantsScreen> createState() =>
+      _LecturerApplicantsScreenState();
+}
+
+class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load applicants from database when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjectProvider>().loadApplicants(widget.projectId);
+    });
   }
 
-  void _reject(BuildContext context, String studentId) {
-    context.read<ProjectProvider>().rejectApplicant(projectId, studentId);
+  Future<void> _accept(BuildContext context, String studentId) async {
+    try {
+      await context.read<ProjectProvider>().acceptApplicant(
+        widget.projectId,
+        studentId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mahasiswa berhasil diterima')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menerima mahasiswa: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _reject(BuildContext context, String studentId) async {
+    try {
+      await context.read<ProjectProvider>().rejectApplicant(
+        widget.projectId,
+        studentId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mahasiswa berhasil ditolak')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menolak mahasiswa: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final project = context.watch<ProjectProvider>().getProjectById(projectId);
+    final project = context.watch<ProjectProvider>().getProjectById(
+      widget.projectId,
+    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -35,7 +86,11 @@ class LecturerApplicantsScreen extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    icon: SvgPicture.asset('assets/logos/back.svg', width: 24, height: 24),
+                    icon: SvgPicture.asset(
+                      'assets/logos/back.svg',
+                      width: 24,
+                      height: 24,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
@@ -44,7 +99,9 @@ class LecturerApplicantsScreen extends StatelessWidget {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => LecturerMembersScreen(projectId: projectId),
+                          builder: (_) => LecturerMembersScreen(
+                            projectId: widget.projectId,
+                          ),
                         ),
                       );
                     },
@@ -54,11 +111,17 @@ class LecturerApplicantsScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text(
                       'Anggota',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -68,40 +131,40 @@ class LecturerApplicantsScreen extends StatelessWidget {
                 child: project == null
                     ? const Center(child: Text('Project tidak ditemukan'))
                     : project.applicants.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'Belum Ada Pendaftar',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: project.applicants.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 16),
-                            itemBuilder: (context, index) {
-                              final applicant = project.applicants[index];
-                              return InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => StudentProfileDetailScreen(
-                                        student: applicant,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: _ApplicantCard(
-                                  applicant: applicant,
-                                  onAccept: () => _accept(context, applicant.id),
-                                  onReject: () => _reject(context, applicant.id),
+                    ? const Center(
+                        child: Text(
+                          'Belum Ada Pendaftar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: project.applicants.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        itemBuilder: (context, index) {
+                          final applicant = project.applicants[index];
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => StudentProfileDetailScreen(
+                                    student: applicant,
+                                  ),
                                 ),
                               );
                             },
-                          ),
+                            child: _ApplicantCard(
+                              applicant: applicant,
+                              onAccept: () => _accept(context, applicant.id),
+                              onReject: () => _reject(context, applicant.id),
+                            ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -143,7 +206,10 @@ class _ApplicantCard extends StatelessWidget {
               children: [
                 Text(
                   applicant.name,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -164,7 +230,10 @@ class _ApplicantCard extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                 ),
                 child: const Text(
                   'Terima',
@@ -180,7 +249,10 @@ class _ApplicantCard extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                 ),
                 child: const Text(
                   'Tolak',

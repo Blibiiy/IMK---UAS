@@ -50,72 +50,52 @@ ALTER TABLE portfolio_projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE portfolio_certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE portfolio_organizations ENABLE ROW LEVEL SECURITY;
 
--- 6. CREATE POLICIES untuk RLS
+-- 6. CREATE POLICIES untuk RLS (DEVELOPMENT MODE - Allow all public access)
+-- NOTE: Untuk production, gunakan authentication dan policy yang lebih ketat
+
 -- Policies untuk portfolio_projects
-CREATE POLICY "Allow public read access to portfolio projects"
-ON portfolio_projects FOR SELECT
+CREATE POLICY "Allow all access to portfolio projects"
+ON portfolio_projects
+FOR ALL
 TO public
-USING (true);
-
-CREATE POLICY "Allow authenticated users to insert portfolio projects"
-ON portfolio_projects FOR INSERT
-TO authenticated
-WITH CHECK (true);
-
-CREATE POLICY "Allow authenticated users to update portfolio projects"
-ON portfolio_projects FOR UPDATE
-TO authenticated
 USING (true)
 WITH CHECK (true);
-
-CREATE POLICY "Allow authenticated users to delete portfolio projects"
-ON portfolio_projects FOR DELETE
-TO authenticated
-USING (true);
 
 -- Policies untuk portfolio_certificates
-CREATE POLICY "Allow public read access to portfolio certificates"
-ON portfolio_certificates FOR SELECT
+CREATE POLICY "Allow all access to portfolio certificates"
+ON portfolio_certificates
+FOR ALL
 TO public
-USING (true);
-
-CREATE POLICY "Allow authenticated users to insert portfolio certificates"
-ON portfolio_certificates FOR INSERT
-TO authenticated
-WITH CHECK (true);
-
-CREATE POLICY "Allow authenticated users to update portfolio certificates"
-ON portfolio_certificates FOR UPDATE
-TO authenticated
 USING (true)
 WITH CHECK (true);
-
-CREATE POLICY "Allow authenticated users to delete portfolio certificates"
-ON portfolio_certificates FOR DELETE
-TO authenticated
-USING (true);
 
 -- Policies untuk portfolio_organizations
-CREATE POLICY "Allow public read access to portfolio organizations"
-ON portfolio_organizations FOR SELECT
+CREATE POLICY "Allow all access to portfolio organizations"
+ON portfolio_organizations
+FOR ALL
 TO public
-USING (true);
-
-CREATE POLICY "Allow authenticated users to insert portfolio organizations"
-ON portfolio_organizations FOR INSERT
-TO authenticated
-WITH CHECK (true);
-
-CREATE POLICY "Allow authenticated users to update portfolio organizations"
-ON portfolio_organizations FOR UPDATE
-TO authenticated
 USING (true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow authenticated users to delete portfolio organizations"
-ON portfolio_organizations FOR DELETE
+/* 
+CATATAN UNTUK PRODUCTION:
+Setelah implement authentication, ganti policies di atas dengan:
+
+-- Policy untuk user hanya bisa CRUD portfolio sendiri:
+CREATE POLICY "Users can CRUD own portfolio"
+ON portfolio_organizations
+FOR ALL
 TO authenticated
+USING (auth.uid()::text = user_id)
+WITH CHECK (auth.uid()::text = user_id);
+
+-- Semua orang bisa read:
+CREATE POLICY "Anyone can read portfolio"
+ON portfolio_organizations
+FOR SELECT
+TO public
 USING (true);
+*/
 
 -- 7. INSERT DATA DUMMY untuk testing
 INSERT INTO portfolio_projects (title, lecturer, deadline, description, requirements, benefits)
