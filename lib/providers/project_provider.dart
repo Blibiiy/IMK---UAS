@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import './portfolio_provider.dart';
 import '../services/supabase_service.dart';
 
-enum ProjectStatus { tersedia, diproses, diterima }
+enum ProjectStatus { tersedia, diproses, diterima, selesai }
 
 class Student {
   final String id;
@@ -91,6 +91,8 @@ class Project {
         return 'Diproses';
       case ProjectStatus.diterima:
         return 'Diterima';
+      case ProjectStatus.selesai:
+        return 'Selesai';
     }
   }
 
@@ -314,6 +316,16 @@ class ProjectProvider extends ChangeNotifier {
 
   List<Project> get projects => _projects;
 
+  // Get projects by specific lecturer name
+  List<Project> getProjectsByLecturer(String lecturerFullName) {
+    if (lecturerFullName.isEmpty) return _projects;
+
+    // Filter projects where supervisor contains the lecturer's name
+    return _projects.where((project) {
+      return project.supervisor.contains(lecturerFullName);
+    }).toList();
+  }
+
   // Initialize and load projects from Supabase
   Future<void> loadProjects() async {
     _isLoading = true;
@@ -391,13 +403,36 @@ class ProjectProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> completeProject(String projectId) async {
+    try {
+      final response = await _supabaseService.updateProjectStatus(
+        id: projectId,
+        status: 'selesai',
+      );
+
+      if (response != null) {
+        final idx = _projects.indexWhere((p) => p.id == projectId);
+        if (idx != -1) {
+          _projects[idx] = _projects[idx].copyWith(
+            status: ProjectStatus.selesai,
+          );
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      _errorMessage = 'Gagal menyelesaikan project: $e';
+      print(_errorMessage);
+      rethrow;
+    }
+  }
+
   Future<void> addProject({
     required String title,
     required String deadline,
     required String participants,
     required String description,
     required List<String> requirements,
-    String lecturerFullName = 'Muhammad Isra Alfattah',
+    required String lecturerFullName,
   }) async {
     try {
       final response = await _supabaseService.addProject(
@@ -533,12 +568,21 @@ class ProjectProvider extends ChangeNotifier {
     }
   }
 
-  /// Check user status in a project (tersedia, terdaftar, diterima)
+  /// Check user status in a project (tersedia, diproses, diterima, selesai)
   Future<String> getUserStatusInProject(String projectId, String userId) async {
     try {
+      // Get project to check its status
+      final project = getProjectById(projectId);
+
       // Check if user is a member
       final members = await _supabaseService.getProjectMembers(projectId);
       final isMember = members.any((m) => m['id'].toString() == userId);
+
+      // If project is completed and user is a member, show 'Selesai'
+      if (isMember && project?.status == ProjectStatus.selesai) {
+        return 'Selesai';
+      }
+
       if (isMember) return 'Diterima';
 
       // Check if user is an applicant
@@ -546,7 +590,7 @@ class ProjectProvider extends ChangeNotifier {
         projectId: projectId,
         studentId: userId,
       );
-      if (isApplicant) return 'Terdaftar';
+      if (isApplicant) return 'Diproses';
 
       // User hasn't applied yet
       return 'Tersedia';

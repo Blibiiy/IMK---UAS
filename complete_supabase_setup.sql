@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS projects (
   participants TEXT NOT NULL,
   requirements JSONB DEFAULT '[]'::jsonb,
   benefits JSONB DEFAULT '[]'::jsonb,
-  status TEXT DEFAULT 'tersedia' CHECK (status IN ('tersedia', 'diproses', 'diterima')),
+  status TEXT DEFAULT 'tersedia' CHECK (status IN ('tersedia', 'diproses', 'diterima', 'selesai')),
   posted_at TIMESTAMPTZ DEFAULT NOW(),
   edited_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -154,7 +154,7 @@ VALUES
     'https://api.dicebear.com/7.x/avataaars/png?seed=Aldi'
   );
 
--- 1 Dosen
+-- 2 Dosen
 INSERT INTO users (id, email, password, full_name, role, program, avatar_url)
 VALUES 
   (
@@ -165,6 +165,15 @@ VALUES
     'dosen',
     NULL,
     'https://api.dicebear.com/7.x/avataaars/png?seed=Budi'
+  ),
+  (
+    '88888888-8888-8888-8888-888888888888',
+    'siti.nurhaliza@lecturer.com',
+    'password123',
+    'Prof. Dr. Siti Nurhaliza, M.Kom.',
+    'dosen',
+    NULL,
+    'https://api.dicebear.com/7.x/avataaars/png?seed=Siti'
   );
 
 -- ============================================

@@ -121,7 +121,11 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                   const SizedBox(height: 24),
                   Consumer<ProjectProvider>(
                     builder: (context, provider, _) {
-                      final projects = provider.projects;
+                      // Filter projects by current lecturer's name
+                      final lecturerName = currentUser?.fullName ?? '';
+                      final projects = provider.getProjectsByLecturer(
+                        lecturerName,
+                      );
                       if (projects.isEmpty) {
                         return Center(
                           child: Padding(

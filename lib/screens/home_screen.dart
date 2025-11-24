@@ -18,6 +18,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   String _selectedFilter = 'Semua';
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   Map<String, String> _projectStatuses =
       {}; // projectId -> status for current user
 
@@ -28,6 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProjectsAndStatuses();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProjectsAndStatuses() async {
@@ -94,6 +102,64 @@ class _HomeScreenState extends State<HomeScreen> {
                     'https://placehold.co/100x100/E0E0E0/E0E0E0',
               ),
             ),
+            const SizedBox(height: 16),
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Cari project...',
+                  hintStyle: TextStyle(
+                    color: cs.onSurfaceVariant.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: cs.onSurfaceVariant,
+                    size: 22,
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: cs.onSurfaceVariant,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: cs.surfaceVariant,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: cs.primary, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -112,12 +178,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text('Tersedia'),
                     ),
                     PopupMenuItem<String>(
-                      value: 'Terdaftar',
-                      child: Text('Terdaftar'),
+                      value: 'Diproses',
+                      child: Text('Diproses'),
                     ),
                     PopupMenuItem<String>(
                       value: 'Diterima',
                       child: Text('Diterima'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'Selesai',
+                      child: Text('Selesai'),
                     ),
                   ],
                   child: Container(
@@ -157,22 +227,43 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Consumer<ProjectProvider>(
                 builder: (context, projectProvider, child) {
-                  // Filter projects based on selected filter
+                  // Filter projects based on selected filter and search query
                   final filteredProjects = projectProvider.projects.where((
                     project,
                   ) {
-                    if (_selectedFilter == 'Semua') return true;
+                    // Filter by status
                     final userStatus =
                         _projectStatuses[project.id] ?? 'Tersedia';
-                    return userStatus == _selectedFilter;
+                    final statusMatch =
+                        _selectedFilter == 'Semua' ||
+                        userStatus == _selectedFilter;
+
+                    // Filter by search query
+                    final titleMatch =
+                        _searchQuery.isEmpty ||
+                        project.title.toLowerCase().contains(_searchQuery);
+
+                    return statusMatch && titleMatch;
                   }).toList();
 
                   if (filteredProjects.isEmpty) {
+                    String emptyMessage = 'Tidak ada project';
+                    if (_searchQuery.isNotEmpty && _selectedFilter != 'Semua') {
+                      emptyMessage =
+                          'Tidak ada project yang cocok dengan "$_searchQuery" untuk kategori $_selectedFilter';
+                    } else if (_searchQuery.isNotEmpty) {
+                      emptyMessage =
+                          'Tidak ada project yang cocok dengan "$_searchQuery"';
+                    } else if (_selectedFilter != 'Semua') {
+                      emptyMessage =
+                          'Tidak ada project untuk kategori $_selectedFilter';
+                    }
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(32.0),
                         child: Text(
-                          'Tidak ada project untuk kategori $_selectedFilter',
+                          emptyMessage,
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
                             color: cs.onSurfaceVariant,
@@ -199,6 +290,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           deadline: project.deadline,
                           participants: project.participants,
                           status: userStatus, // Show user-specific status
+                          onTap: () async {
+                            // Navigate to detail and wait for result
+                            final shouldRefresh = await Navigator.push<bool>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ProjectDetailScreen(projectId: project.id),
+                              ),
+                            );
+                            // Refresh status if user registered
+                            if (shouldRefresh == true) {
+                              await _loadUserStatusForAllProjects();
+                            }
+                          },
                         ),
                       );
                     },
@@ -306,6 +411,7 @@ class ProjectCard extends StatelessWidget {
   final String deadline;
   final String participants;
   final String status;
+  final VoidCallback? onTap;
 
   const ProjectCard({
     super.key,
@@ -315,18 +421,21 @@ class ProjectCard extends StatelessWidget {
     required this.deadline,
     required this.participants,
     required this.status,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProjectDetailScreen(projectId: projectId),
-        ),
-      ),
+      onTap:
+          onTap ??
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProjectDetailScreen(projectId: projectId),
+            ),
+          ),
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
@@ -340,21 +449,26 @@ class ProjectCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: cs.onSurface,
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 12),
                 StatusTag(status: status),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               description,
-              maxLines: 2,
+              maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
             ),
@@ -387,36 +501,20 @@ class StatusTag extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    Color bg;
-    Color fg;
-
-    switch (status.toLowerCase()) {
-      case 'tersedia':
-        bg = cs.primary;
-        fg = cs.onPrimary;
-        break;
-      case 'terdaftar':
-        bg = const Color(0xFFF59E0B); // Orange/Warning color
-        fg = Colors.white;
-        break;
-      case 'diterima':
-        bg = const Color(0xFF2E7D32); // Success green
-        fg = Colors.white;
-        break;
-      default:
-        bg = cs.outline;
-        fg = cs.onSurface;
-    }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
       decoration: BoxDecoration(
-        color: bg,
+        color: cs.surfaceVariant,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cs.outline, width: 1),
       ),
       child: Text(
         status,
-        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: cs.onSurface,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

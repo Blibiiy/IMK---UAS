@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/project_provider.dart';
-import '../theme/app_theme.dart';
 
 class LecturerEditProjectScreen extends StatefulWidget {
   final String projectId;
@@ -64,34 +63,33 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
     }
   }
 
-  InputDecoration _outlineInputDecoration(
-    BuildContext context, {
+  InputDecoration _outlineInputDecoration({
     String? hintText,
     Widget? suffixIcon,
     String? suffixText,
   }) {
-    final cs = Theme.of(context).colorScheme;
     return InputDecoration(
       hintText: hintText,
+      // Placeholder dengan warna lebih transparan
       hintStyle: TextStyle(
-        color: cs.onSurfaceVariant.withOpacity(0.5),
+        color: Colors.grey[400],
         fontWeight: FontWeight.w300,
         fontSize: 14,
       ),
       filled: true,
-      fillColor: cs.surface,
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: cs.outline, width: 1.5),
+        borderSide: const BorderSide(color: Colors.black, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: cs.outline, width: 1.5),
+        borderSide: const BorderSide(color: Colors.black, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: cs.primary, width: 1.5),
+        borderSide: const BorderSide(color: Colors.black, width: 1.5),
       ),
       suffixIcon: suffixIcon != null
           ? Padding(
@@ -101,7 +99,10 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
           : null,
       suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 0),
       suffixText: suffixText,
-      suffixStyle: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600),
+      suffixStyle: const TextStyle(
+        color: Colors.black87,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 
@@ -159,6 +160,70 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
     }
   }
 
+  Future<void> _onDelete() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Project?'),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus project ini? Tindakan ini tidak dapat dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Show loading
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    try {
+      await context.read<ProjectProvider>().deleteProject(widget.projectId);
+
+      // Close loading
+      if (mounted) Navigator.of(context).pop();
+
+      // Show success and navigate back twice (skip detail screen)
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Project berhasil dihapus.')),
+        );
+        Navigator.pop(context); // kembali ke detail
+        Navigator.pop(context); // kembali ke dashboard
+      }
+    } catch (e) {
+      // Close loading
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus project: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_project == null) {
@@ -176,205 +241,183 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Gradient Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              decoration: AppTheme.headerDecoration(cs),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  IconButton(
-                    icon: SvgPicture.asset(
-                      'assets/logos/back.svg',
-                      width: 24,
-                      height: 24,
-                      colorFilter: ColorFilter.mode(
-                        cs.onPrimary,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    onPressed: () => Navigator.pop(context),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Back
+                IconButton(
+                  icon: SvgPicture.asset(
+                    'assets/logos/back.svg',
+                    width: 24,
+                    height: 24,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Edit Project',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: cs.onPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Form Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
+                  onPressed: () => Navigator.pop(context),
                 ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Nama Project
-                      Text(
-                        'Nama Project',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: _outlineInputDecoration(
-                          context,
-                          hintText: 'Contoh: Aplikasi Pendeteksi Plat Nomor',
-                        ),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Nama project wajib diisi'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Tanggal Deadline
-                      Text(
-                        'Tanggal Deadline',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _deadlineController,
-                        readOnly: true,
-                        decoration: _outlineInputDecoration(
-                          context,
-                          hintText: 'Pilih Tanggal Deadline',
-                          suffixIcon: SvgPicture.asset(
-                            'assets/logos/calendar.svg',
-                            width: 22,
-                            height: 22,
-                          ),
-                        ),
-                        onTap: _pickDeadline,
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Tanggal wajib dipilih'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Jumlah Partisipan
-                      Text(
-                        'Jumlah Partisipan',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _participantsController,
-                        decoration: _outlineInputDecoration(
-                          context,
-                          hintText: 'Contoh: 5',
-                          suffixText: 'Partisipan',
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty)
-                            return 'Jumlah partisipan wajib diisi';
-                          final n = int.tryParse(v.trim());
-                          if (n == null || n <= 0)
-                            return 'Jumlah partisipan harus angka > 0';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Persyaratan Project
-                      Text(
-                        'Persyaratan Project',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      RequirementInputChipField(
-                        requirements: _requirements,
-                        onRequirementsChanged: (requirements) {
-                          setState(() {
-                            _requirements = requirements;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Detail Project
-                      Text(
-                        'Detail Project',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _descriptionController,
-                        maxLines: 10,
-                        decoration: _outlineInputDecoration(
-                          context,
-                          hintText:
-                              'Contoh: Project ini bertujuan untuk mengembangkan aplikasi mobile yang dapat mendeteksi dan membaca plat nomor kendaraan secara otomatis menggunakan teknologi computer vision...',
-                        ),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Detail project wajib diisi'
-                            : null,
-                      ),
-                      const SizedBox(height: 28),
-
-                      // Tombol Update
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: OutlinedButton(
-                          onPressed: _onUpdate,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: cs.onSurface,
-                            side: BorderSide(color: cs.outline, width: 1.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 28,
-                              vertical: 12,
-                            ),
-                          ),
-                          child: const Text(
-                            'Update',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                const SizedBox(height: 8),
+                Text(
+                  'Edit Project',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: cs.onSurface,
                   ),
                 ),
-              ),
+                const SizedBox(height: 24),
+
+                // Nama Project
+                Text(
+                  'Nama Project',
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _titleController,
+                  decoration: _outlineInputDecoration(
+                    hintText: 'Contoh: Aplikasi Pendeteksi Plat Nomor',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Nama project wajib diisi'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+
+                // Tanggal Deadline
+                Text(
+                  'Tanggal Deadline',
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _deadlineController,
+                  readOnly: true,
+                  decoration: _outlineInputDecoration(
+                    hintText: 'Pilih Tanggal Deadline',
+                    suffixIcon: SvgPicture.asset(
+                      'assets/logos/calendar.svg',
+                      width: 22,
+                      height: 22,
+                    ),
+                  ),
+                  onTap: _pickDeadline,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Tanggal wajib dipilih'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+
+                // Jumlah Partisipan
+                Text(
+                  'Jumlah Partisipan',
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _participantsController,
+                  decoration: _outlineInputDecoration(
+                    hintText: 'Contoh: 5',
+                    suffixText: 'Partisipan',
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty)
+                      return 'Jumlah partisipan wajib diisi';
+                    final n = int.tryParse(v.trim());
+                    if (n == null || n <= 0)
+                      return 'Jumlah partisipan harus angka > 0';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Persyaratan Project
+                Text(
+                  'Persyaratan Project',
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 8),
+                RequirementInputChipField(
+                  requirements: _requirements,
+                  onRequirementsChanged: (requirements) {
+                    setState(() {
+                      _requirements = requirements;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Detail Project
+                Text(
+                  'Detail Project',
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 10,
+                  decoration: _outlineInputDecoration(
+                    hintText:
+                        'Contoh: Project ini bertujuan untuk mengembangkan aplikasi mobile yang dapat mendeteksi dan membaca plat nomor kendaraan secara otomatis menggunakan teknologi computer vision...',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Detail project wajib diisi'
+                      : null,
+                ),
+                const SizedBox(height: 28),
+
+                // Tombol Update dan Delete
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Tombol Delete
+                    OutlinedButton(
+                      onPressed: _onDelete,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    // Tombol Update
+                    OutlinedButton(
+                      onPressed: _onUpdate,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        side: const BorderSide(color: Colors.black, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'Update',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

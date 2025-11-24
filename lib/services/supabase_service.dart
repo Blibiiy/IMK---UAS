@@ -16,17 +16,29 @@ class SupabaseService {
     required String password,
   }) async {
     try {
+      // First, get user by email only
       final response = await client
           .from('users')
           .select()
           .eq('email', email)
-          .eq('password', password)
           .maybeSingle();
 
-      return response;
+      if (response == null) {
+        print('User not found with email: $email');
+        return null;
+      }
+
+      // Check if password matches
+      if (response['password'] == password) {
+        print('Login successful for: $email');
+        return response;
+      } else {
+        print('Invalid password for: $email');
+        return null;
+      }
     } catch (e) {
       print('Error login: $e');
-      return null;
+      rethrow;
     }
   }
 

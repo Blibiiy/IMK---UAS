@@ -6,9 +6,43 @@ import '../providers/user_provider.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/success_dialog.dart';
 
-class ProjectDetailScreen extends StatelessWidget {
+class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
   const ProjectDetailScreen({super.key, required this.projectId});
+
+  @override
+  State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
+}
+
+class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+  String _userStatus = 'Tersedia';
+  bool _isLoadingStatus = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserStatus();
+  }
+
+  Future<void> _loadUserStatus() async {
+    final userId = context.read<UserProvider>().currentUser?.id;
+    if (userId == null) {
+      setState(() {
+        _isLoadingStatus = false;
+      });
+      return;
+    }
+
+    final status = await context.read<ProjectProvider>().getUserStatusInProject(
+      widget.projectId,
+      userId,
+    );
+
+    setState(() {
+      _userStatus = status;
+      _isLoadingStatus = false;
+    });
+  }
 
   void _showConfirmationDialog(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -40,7 +74,10 @@ class ProjectDetailScreen extends StatelessWidget {
               await Provider.of<ProjectProvider>(
                 context,
                 listen: false,
-              ).registerProject(projectId, currentUser.id);
+              ).registerProject(widget.projectId, currentUser.id);
+
+              // Reload user status after successful registration
+              await _loadUserStatus();
 
               if (!context.mounted) return;
               Navigator.pop(context); // Close loading
@@ -48,8 +85,16 @@ class ProjectDetailScreen extends StatelessWidget {
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (_) => const SuccessDialog(
+                builder: (_) => SuccessDialog(
                   message: 'Pendaftaran project berhasil dilakukan!',
+                  onClose: () {
+                    // Pop back to home screen with refresh signal
+                    Navigator.pop(context); // Close success dialog
+                    Navigator.pop(
+                      context,
+                      true,
+                    ); // Back to home with refresh flag
+                  },
                 ),
               );
             } catch (e) {
@@ -96,7 +141,7 @@ class ProjectDetailScreen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final project = Provider.of<ProjectProvider>(
       context,
-    ).getProjectById(projectId);
+    ).getProjectById(widget.projectId);
     if (project == null) {
       return Scaffold(
         appBar: AppBar(
@@ -213,10 +258,21 @@ class ProjectDetailScreen extends StatelessWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: project.status == ProjectStatus.tersedia
+                    onPressed: _isLoadingStatus
+                        ? null
+                        : (project.status == ProjectStatus.tersedia &&
+                              _userStatus == 'Tersedia')
                         ? () => _showConfirmationDialog(context)
                         : null,
-                    child: const Text('Daftar >>'),
+                    child: Text(
+                      _isLoadingStatus
+                          ? 'Loading...'
+                          : _userStatus == 'Diproses'
+                          ? 'Diproses'
+                          : _userStatus == 'Diterima'
+                          ? 'Sudah Diterima'
+                          : 'Daftar >>',
+                    ),
                   ),
                 ),
               ],

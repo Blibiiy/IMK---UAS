@@ -51,6 +51,29 @@ class LecturerProjectDetailScreen extends StatelessWidget {
     );
   }
 
+  void _confirmCompleteProject(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => ConfirmCloseDialog(
+        title: 'Selesaikan Project?',
+        subtitle:
+            'Tekan "Ya" jika project sudah selesai dikerjakan, "Tidak" jika belum',
+        onConfirm: () {
+          // Update status proyek menjadi selesai
+          context.read<ProjectProvider>().completeProject(projectId);
+
+          // Success popup
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) =>
+                const SuccessDialog(message: 'Project telah diselesaikan!'),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final project = context.watch<ProjectProvider>().getProjectById(projectId);
@@ -240,7 +263,7 @@ class LecturerProjectDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 48),
 
-              // Buttons: List Anggota + (conditionally) Tutup Pendaftaran
+              // Buttons: List Anggota + (conditionally) Tutup Pendaftaran atau Selesaikan Project
               Row(
                 children: [
                   Expanded(
@@ -286,6 +309,27 @@ class LecturerProjectDetailScreen extends StatelessWidget {
                         ),
                         child: const Text(
                           'Tutup Pendaftaran',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (!isOpen && project.status != ProjectStatus.selesai)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _confirmCompleteProject(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: cs.onSurface,
+                          side: BorderSide(color: cs.outline, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text(
+                          'Selesaikan Project',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS projects (
   participants TEXT NOT NULL,
   requirements JSONB DEFAULT '[]'::jsonb,
   benefits JSONB DEFAULT '[]'::jsonb,
-  status TEXT DEFAULT 'tersedia' CHECK (status IN ('tersedia', 'diproses', 'diterima')),
+  status TEXT DEFAULT 'tersedia' CHECK (status IN ('tersedia', 'diproses', 'diterima', 'selesai')),
   posted_at TIMESTAMPTZ DEFAULT NOW(),
   edited_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/project_provider.dart';
+import '../providers/user_provider.dart';
 import '../widgets/success_dialog.dart';
 
 class LecturerAddProjectScreen extends StatefulWidget {
@@ -108,13 +109,17 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
     );
 
     try {
+      // Ambil nama dosen yang sedang login
+      final currentUser = context.read<UserProvider>().currentUser;
+      final lecturerName = currentUser?.fullName ?? 'Dosen Pembimbing';
+
       await context.read<ProjectProvider>().addProject(
         title: _titleController.text.trim(),
         deadline: _deadlineController.text.trim(),
         participants: _participantsController.text.trim(),
         description: _descriptionController.text.trim(),
         requirements: _requirements,
-        // lecturerFullName opsional (default placeholder)
+        lecturerFullName: lecturerName,
       );
 
       // Close loading

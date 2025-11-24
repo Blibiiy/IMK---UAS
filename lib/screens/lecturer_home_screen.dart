@@ -20,6 +20,9 @@ class LecturerHomeScreen extends StatefulWidget {
 
 class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
   int _currentIndex = 0;
+  String _selectedFilter = 'Semua';
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -28,6 +31,12 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectProvider>().loadProjects();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _onBottomNavTap(int index) {
@@ -115,17 +124,60 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                     'https://placehold.co/100x100/E0E0E0/E0E0E0',
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            // Search Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Your Project',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: cs.onSurface,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Cari project...',
+                  hintStyle: TextStyle(
+                    color: cs.onSurfaceVariant.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: cs.onSurfaceVariant,
+                    size: 22,
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: cs.onSurfaceVariant,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: cs.surfaceVariant,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: cs.primary, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
                   ),
                 ),
               ),
@@ -133,14 +185,115 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Your Project',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      setState(() {
+                        _selectedFilter = value;
+                      });
+                    },
+                    itemBuilder: (BuildContext context) => const [
+                      PopupMenuItem<String>(
+                        value: 'Semua',
+                        child: Text('Semua'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Pendaftaran',
+                        child: Text('Pendaftaran'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Pendaftaran Ditutup',
+                        child: Text('Pendaftaran Ditutup'),
+                      ),
+                    ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cs.secondaryContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _selectedFilter,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSecondaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.filter_list,
+                            size: 20,
+                            color: cs.onSecondaryContainer,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Consumer<ProjectProvider>(
                 builder: (context, provider, _) {
-                  final projects = provider.projects;
-                  if (projects.isEmpty) {
+                  // Filter projects by current lecturer's name
+                  final lecturerName = currentUser?.fullName ?? '';
+                  final allProjects = provider.getProjectsByLecturer(
+                    lecturerName,
+                  );
+
+                  // Apply filter based on selected filter and search query
+                  final filteredProjects = allProjects.where((project) {
+                    // Filter by status
+                    final tag = project.status == ProjectStatus.tersedia
+                        ? 'Pendaftaran'
+                        : 'Pendaftaran Ditutup';
+                    final statusMatch =
+                        _selectedFilter == 'Semua' || tag == _selectedFilter;
+
+                    // Filter by search query
+                    final titleMatch =
+                        _searchQuery.isEmpty ||
+                        project.title.toLowerCase().contains(_searchQuery);
+
+                    return statusMatch && titleMatch;
+                  }).toList();
+
+                  if (filteredProjects.isEmpty) {
+                    String emptyMessage = 'Belum ada proyek';
+                    if (_searchQuery.isNotEmpty && _selectedFilter != 'Semua') {
+                      emptyMessage =
+                          'Tidak ada proyek yang cocok dengan "$_searchQuery" untuk kategori $_selectedFilter';
+                    } else if (_searchQuery.isNotEmpty) {
+                      emptyMessage =
+                          'Tidak ada proyek yang cocok dengan "$_searchQuery"';
+                    } else if (_selectedFilter != 'Semua') {
+                      emptyMessage =
+                          'Tidak ada proyek untuk kategori $_selectedFilter';
+                    }
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 60),
                       child: Text(
-                        'Belum ada proyek',
+                        emptyMessage,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
                           color: cs.onSurfaceVariant,
@@ -151,9 +304,9 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: projects.length,
+                    itemCount: filteredProjects.length,
                     itemBuilder: (context, i) {
-                      final p = projects[i];
+                      final p = filteredProjects[i];
                       final tag = p.status == ProjectStatus.tersedia
                           ? 'Pendaftaran'
                           : 'Pendaftaran Ditutup';

@@ -78,7 +78,16 @@ class UserProvider extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _errorMessage = 'Error login: $e';
+      print('Login error details: $e');
+      if (e.toString().contains('Internal server error')) {
+        _errorMessage =
+            'Terjadi kesalahan server. Pastikan koneksi database tersedia.';
+      } else if (e.toString().contains('relation') ||
+          e.toString().contains('does not exist')) {
+        _errorMessage = 'Tabel users tidak ditemukan. Periksa setup database.';
+      } else {
+        _errorMessage = 'Gagal login. Coba lagi.';
+      }
       _isLoading = false;
       notifyListeners();
       return false;
