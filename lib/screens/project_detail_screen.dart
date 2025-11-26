@@ -247,36 +247,67 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
             ),
             const SizedBox(height: 40),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    child: const Text('Chat'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoadingStatus
-                        ? null
-                        : (project.status == ProjectStatus.tersedia &&
-                              _userStatus == 'Tersedia')
-                        ? () => _showConfirmationDialog(context)
-                        : null,
-                    child: Text(
-                      _isLoadingStatus
-                          ? 'Loading...'
-                          : _userStatus == 'Diproses'
-                          ? 'Diproses'
-                          : _userStatus == 'Diterima'
-                          ? 'Sudah Diterima'
-                          : 'Daftar >>',
+            // Hanya tampilkan tombol jika bukan status Selesai
+            if (_userStatus != 'Selesai')
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {},
+                      child: const Text('Chat'),
                     ),
                   ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoadingStatus
+                          ? null
+                          : (project.status == ProjectStatus.tersedia &&
+                                _userStatus == 'Tersedia')
+                          ? () => _showConfirmationDialog(context)
+                          : null,
+                      child: Text(
+                        _isLoadingStatus
+                            ? 'Loading...'
+                            : _userStatus == 'Diproses'
+                            ? 'Diproses'
+                            : _userStatus == 'Diterima'
+                            ? 'Sudah Diterima'
+                            : 'Daftar >>',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            // Tampilkan status Selesai jika project sudah selesai
+            if (_userStatus == 'Selesai')
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2E5AAC), // Blue background
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Project Selesai',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 24),
           ],
         ),

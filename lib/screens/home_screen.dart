@@ -15,7 +15,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   String _selectedFilter = 'Semua';
   String _searchQuery = '';
@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Load projects from Supabase when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProjectsAndStatuses();
@@ -33,7 +34,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh status when app resumes
+    if (state == AppLifecycleState.resumed) {
+      _loadUserStatusForAllProjects();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
   }
@@ -58,9 +69,11 @@ class _HomeScreenState extends State<HomeScreen> {
       statuses[project.id] = status;
     }
 
-    setState(() {
-      _projectStatuses = statuses;
-    });
+    if (mounted) {
+      setState(() {
+        _projectStatuses = statuses;
+      });
+    }
   }
 
   void _onBottomNavTap(int index) {
@@ -86,233 +99,242 @@ class _HomeScreenState extends State<HomeScreen> {
     final currentUser = userProvider.currentUser;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header dengan gradient
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
-              decoration: AppTheme.headerDecoration(cs),
-              child: StudentHeaderCard(
-                name: currentUser?.fullName ?? 'User',
-                program: currentUser?.program ?? 'Program Studi',
-                imageUrl:
-                    currentUser?.avatarUrl ??
-                    'https://placehold.co/100x100/E0E0E0/E0E0E0',
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value.toLowerCase();
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Cari project...',
-                  hintStyle: TextStyle(
-                    color: cs.onSurfaceVariant.withOpacity(0.6),
-                    fontSize: 14,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: cs.onSurfaceVariant,
-                    size: 22,
-                  ),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: cs.onSurfaceVariant,
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: cs.surfaceVariant,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: cs.primary, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+      body: RefreshIndicator(
+        onRefresh: _loadProjectsAndStatuses,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // Header dengan gradient
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
+                decoration: AppTheme.headerDecoration(cs),
+                child: StudentHeaderCard(
+                  name: currentUser?.fullName ?? 'User',
+                  program: currentUser?.program ?? 'Program Studi',
+                  imageUrl:
+                      currentUser?.avatarUrl ??
+                      'https://placehold.co/100x100/E0E0E0/E0E0E0',
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: PopupMenuButton<String>(
-                  onSelected: (value) {
+              const SizedBox(height: 16),
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
                     setState(() {
-                      _selectedFilter = value;
+                      _searchQuery = value.toLowerCase();
                     });
                   },
-                  itemBuilder: (BuildContext context) => const [
-                    PopupMenuItem<String>(value: 'Semua', child: Text('Semua')),
-                    PopupMenuItem<String>(
-                      value: 'Tersedia',
-                      child: Text('Tersedia'),
+                  decoration: InputDecoration(
+                    hintText: 'Cari project...',
+                    hintStyle: TextStyle(
+                      color: cs.onSurfaceVariant.withOpacity(0.6),
+                      fontSize: 14,
                     ),
-                    PopupMenuItem<String>(
-                      value: 'Diproses',
-                      child: Text('Diproses'),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: cs.onSurfaceVariant,
+                      size: 22,
                     ),
-                    PopupMenuItem<String>(
-                      value: 'Diterima',
-                      child: Text('Diterima'),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              color: cs.onSurfaceVariant,
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: cs.surfaceVariant,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
-                    PopupMenuItem<String>(
-                      value: 'Selesai',
-                      child: Text('Selesai'),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
-                  ],
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: cs.primary, width: 2),
                     ),
-                    decoration: BoxDecoration(
-                      color: cs.secondaryContainer,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _selectedFilter,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: cs.onSecondaryContainer,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.filter_list,
-                          size: 20,
-                          color: cs.onSecondaryContainer,
-                        ),
-                      ],
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Consumer<ProjectProvider>(
-                builder: (context, projectProvider, child) {
-                  // Filter projects based on selected filter and search query
-                  final filteredProjects = projectProvider.projects.where((
-                    project,
-                  ) {
-                    // Filter by status
-                    final userStatus =
-                        _projectStatuses[project.id] ?? 'Tersedia';
-                    final statusMatch =
-                        _selectedFilter == 'Semua' ||
-                        userStatus == _selectedFilter;
-
-                    // Filter by search query
-                    final titleMatch =
-                        _searchQuery.isEmpty ||
-                        project.title.toLowerCase().contains(_searchQuery);
-
-                    return statusMatch && titleMatch;
-                  }).toList();
-
-                  if (filteredProjects.isEmpty) {
-                    String emptyMessage = 'Tidak ada project';
-                    if (_searchQuery.isNotEmpty && _selectedFilter != 'Semua') {
-                      emptyMessage =
-                          'Tidak ada project yang cocok dengan "$_searchQuery" untuk kategori $_selectedFilter';
-                    } else if (_searchQuery.isNotEmpty) {
-                      emptyMessage =
-                          'Tidak ada project yang cocok dengan "$_searchQuery"';
-                    } else if (_selectedFilter != 'Semua') {
-                      emptyMessage =
-                          'Tidak ada project untuk kategori $_selectedFilter';
-                    }
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Text(
-                          emptyMessage,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: PopupMenuButton<String>(
+                    onSelected: (value) {
+                      setState(() {
+                        _selectedFilter = value;
+                      });
+                    },
+                    itemBuilder: (BuildContext context) => const [
+                      PopupMenuItem<String>(
+                        value: 'Semua',
+                        child: Text('Semua'),
                       ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filteredProjects.length,
-                    itemBuilder: (context, index) {
-                      final project = filteredProjects[index];
+                      PopupMenuItem<String>(
+                        value: 'Tersedia',
+                        child: Text('Tersedia'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Diproses',
+                        child: Text('Diproses'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Diterima',
+                        child: Text('Diterima'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Selesai',
+                        child: Text('Selesai'),
+                      ),
+                    ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cs.secondaryContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _selectedFilter,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSecondaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.filter_list,
+                            size: 20,
+                            color: cs.onSecondaryContainer,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Consumer<ProjectProvider>(
+                  builder: (context, projectProvider, child) {
+                    // Filter projects based on selected filter and search query
+                    final filteredProjects = projectProvider.projects.where((
+                      project,
+                    ) {
+                      // Filter by status
                       final userStatus =
                           _projectStatuses[project.id] ?? 'Tersedia';
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: ProjectCard(
-                          projectId: project.id,
-                          title: project.title,
-                          description: project.description,
-                          deadline: project.deadline,
-                          participants: project.participants,
-                          status: userStatus, // Show user-specific status
-                          onTap: () async {
-                            // Navigate to detail and wait for result
-                            final shouldRefresh = await Navigator.push<bool>(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ProjectDetailScreen(projectId: project.id),
-                              ),
-                            );
-                            // Refresh status if user registered
-                            if (shouldRefresh == true) {
-                              await _loadUserStatusForAllProjects();
-                            }
-                          },
+                      final statusMatch =
+                          _selectedFilter == 'Semua' ||
+                          userStatus == _selectedFilter;
+
+                      // Filter by search query
+                      final titleMatch =
+                          _searchQuery.isEmpty ||
+                          project.title.toLowerCase().contains(_searchQuery);
+
+                      return statusMatch && titleMatch;
+                    }).toList();
+
+                    if (filteredProjects.isEmpty) {
+                      String emptyMessage = 'Tidak ada project';
+                      if (_searchQuery.isNotEmpty &&
+                          _selectedFilter != 'Semua') {
+                        emptyMessage =
+                            'Tidak ada project yang cocok dengan "$_searchQuery" untuk kategori $_selectedFilter';
+                      } else if (_searchQuery.isNotEmpty) {
+                        emptyMessage =
+                            'Tidak ada project yang cocok dengan "$_searchQuery"';
+                      } else if (_selectedFilter != 'Semua') {
+                        emptyMessage =
+                            'Tidak ada project untuk kategori $_selectedFilter';
+                      }
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Text(
+                            emptyMessage,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
                         ),
                       );
-                    },
-                  );
-                },
+                    }
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: filteredProjects.length,
+                      itemBuilder: (context, index) {
+                        final project = filteredProjects[index];
+                        final userStatus =
+                            _projectStatuses[project.id] ?? 'Tersedia';
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: ProjectCard(
+                            projectId: project.id,
+                            title: project.title,
+                            description: project.description,
+                            deadline: project.deadline,
+                            participants: project.participants,
+                            status: userStatus, // Show user-specific status
+                            onTap: () async {
+                              // Navigate to detail and wait for result
+                              final shouldRefresh = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProjectDetailScreen(
+                                    projectId: project.id,
+                                  ),
+                                ),
+                              );
+                              // Refresh status if user registered
+                              if (shouldRefresh == true) {
+                                await _loadUserStatusForAllProjects();
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -499,19 +521,16 @@ class StatusTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
       decoration: BoxDecoration(
-        color: cs.surfaceVariant,
+        color: const Color(0xFF2E5AAC), // Blue background
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cs.outline, width: 1),
       ),
       child: Text(
         status,
-        style: TextStyle(
-          color: cs.onSurface,
+        style: const TextStyle(
+          color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),

@@ -9,7 +9,6 @@ import 'lecturer_profile_screen.dart';
 import 'chat_list_screen.dart';
 import 'lecturer_add_project_screen.dart';
 import '../theme/app_theme.dart';
-import 'home_screen.dart'; // for StatusTag
 
 class LecturerHomeScreen extends StatefulWidget {
   const LecturerHomeScreen({super.key});
@@ -212,8 +211,12 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                         child: Text('Pendaftaran'),
                       ),
                       PopupMenuItem<String>(
-                        value: 'Pendaftaran Ditutup',
-                        child: Text('Pendaftaran Ditutup'),
+                        value: 'Proses',
+                        child: Text('Proses'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Selesai',
+                        child: Text('Selesai'),
                       ),
                     ],
                     child: Container(
@@ -263,9 +266,14 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                   // Apply filter based on selected filter and search query
                   final filteredProjects = allProjects.where((project) {
                     // Filter by status
-                    final tag = project.status == ProjectStatus.tersedia
-                        ? 'Pendaftaran'
-                        : 'Pendaftaran Ditutup';
+                    String tag;
+                    if (project.status == ProjectStatus.tersedia) {
+                      tag = 'Pendaftaran';
+                    } else if (project.status == ProjectStatus.selesai) {
+                      tag = 'Selesai';
+                    } else {
+                      tag = 'Proses'; // diproses atau diterima
+                    }
                     final statusMatch =
                         _selectedFilter == 'Semua' || tag == _selectedFilter;
 
@@ -307,9 +315,14 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                     itemCount: filteredProjects.length,
                     itemBuilder: (context, i) {
                       final p = filteredProjects[i];
-                      final tag = p.status == ProjectStatus.tersedia
-                          ? 'Pendaftaran'
-                          : 'Pendaftaran Ditutup';
+                      String tag;
+                      if (p.status == ProjectStatus.tersedia) {
+                        tag = 'Pendaftaran';
+                      } else if (p.status == ProjectStatus.selesai) {
+                        tag = 'Selesai';
+                      } else {
+                        tag = 'Proses';
+                      }
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: _LecturerProjectCard(
@@ -465,6 +478,30 @@ class _LecturerProjectCard extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class StatusTag extends StatelessWidget {
+  final String status;
+  const StatusTag({super.key, required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2E5AAC), // Blue background
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

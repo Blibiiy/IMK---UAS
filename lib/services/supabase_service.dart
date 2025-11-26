@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 
@@ -7,6 +8,67 @@ class SupabaseService {
   SupabaseService._internal();
 
   SupabaseClient get client => Supabase.instance.client;
+
+  // ============ FILE STORAGE ============
+
+  /// Upload file to Supabase Storage
+  /// Returns the public URL of the uploaded file
+  Future<String?> uploadFile({
+    required File file,
+    required String bucket,
+    required String path,
+  }) async {
+    try {
+      final fileName = path.split('/').last;
+      final fileExtension = fileName.split('.').last.toLowerCase();
+
+      // Validate file size (max 10MB)
+      final fileSize = await file.length();
+      if (fileSize > 10 * 1024 * 1024) {
+        throw Exception('Ukuran file tidak boleh lebih dari 10 MB');
+      }
+
+      // Validate file type
+      final allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+      if (!allowedExtensions.contains(fileExtension)) {
+        throw Exception(
+          'Format file tidak didukung. Gunakan PDF atau gambar (JPG, PNG, GIF, WEBP)',
+        );
+      }
+
+      // Upload file to Supabase Storage
+      final uploadPath = await client.storage
+          .from(bucket)
+          .upload(
+            path,
+            file,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          );
+
+      // Get public URL
+      final publicUrl = client.storage.from(bucket).getPublicUrl(path);
+
+      print('File uploaded successfully: $publicUrl');
+      return publicUrl;
+    } catch (e) {
+      print('Error uploading file: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete file from Supabase Storage
+  Future<void> deleteFile({
+    required String bucket,
+    required String path,
+  }) async {
+    try {
+      await client.storage.from(bucket).remove([path]);
+      print('File deleted successfully: $path');
+    } catch (e) {
+      print('Error deleting file: $e');
+      rethrow;
+    }
+  }
 
   // ============ USER AUTHENTICATION ============
 

@@ -131,6 +131,8 @@ class Project {
       status = ProjectStatus.diproses;
     } else if (json['status'] == 'diterima') {
       status = ProjectStatus.diterima;
+    } else if (json['status'] == 'selesai') {
+      status = ProjectStatus.selesai;
     }
 
     return Project(
@@ -571,19 +573,23 @@ class ProjectProvider extends ChangeNotifier {
   /// Check user status in a project (tersedia, diproses, diterima, selesai)
   Future<String> getUserStatusInProject(String projectId, String userId) async {
     try {
-      // Get project to check its status
-      final project = getProjectById(projectId);
+      // Get project data directly from database to ensure latest status
+      final projectData = await _supabaseService.getProjectById(projectId);
+      final projectStatus = projectData?['status'] ?? 'tersedia';
 
       // Check if user is a member
       final members = await _supabaseService.getProjectMembers(projectId);
       final isMember = members.any((m) => m['id'].toString() == userId);
 
-      // If project is completed and user is a member, show 'Selesai'
-      if (isMember && project?.status == ProjectStatus.selesai) {
-        return 'Selesai';
+      // If user is a member, return status based on project status
+      if (isMember) {
+        // If project is completed, show 'Selesai' for members
+        if (projectStatus == 'selesai') {
+          return 'Selesai';
+        }
+        // Otherwise show 'Diterima'
+        return 'Diterima';
       }
-
-      if (isMember) return 'Diterima';
 
       // Check if user is an applicant
       final isApplicant = await _supabaseService.isAlreadyApplied(
