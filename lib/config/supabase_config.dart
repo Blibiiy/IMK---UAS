@@ -2,11 +2,11 @@
 // PENTING: Ganti dengan URL dan API Key dari project Supabase Anda
 class SupabaseConfig {
   // URL Supabase project Anda
-  static const String supabaseUrl = 'https://ngofniyzzycvtgsqraxa.supabase.co';
+  static const String supabaseUrl = 'https://hbguuvzxzigxnwwefeuk.supabase.co';
 
   // Anon key dari Supabase project Anda
   static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nb2ZuaXl6enljdnRnc3FyYXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3NjIzNDAsImV4cCI6MjA3OTMzODM0MH0.h1GV7gN3Aol8nXVxfLszALexUx1yMPGWL21apCfbZbs';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhiZ3V1dnp4emlneG53d2VmZXVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2NDM3OTksImV4cCI6MjA4MDIxOTc5OX0.B1MpLNY0sHo84g2PiQnmba7aQU92paRfNkUErdkPxMw';
 
   // Nama tabel di database
   static const String projectsTable = 'projects';

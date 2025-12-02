@@ -13,7 +13,9 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 -- 2. ENABLE RLS ON STORAGE.OBJECTS
 -- ============================================
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- NOTE: RLS sudah di-enable by default di Supabase Storage
+-- Tidak perlu menjalankan ALTER TABLE, skip bagian ini
+-- ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- 3. CREATE STORAGE POLICIES (DEVELOPMENT MODE)

@@ -85,15 +85,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (_) => SuccessDialog(
+                builder: (dialogContext) => SuccessDialog(
                   message: 'Pendaftaran project berhasil dilakukan!',
                   onClose: () {
-                    // Pop back to home screen with refresh signal
-                    Navigator.pop(context); // Close success dialog
-                    Navigator.pop(
-                      context,
-                      true,
-                    ); // Back to home with refresh flag
+                    // Just close the success dialog, stay on project detail page
+                    Navigator.of(dialogContext).pop();
+                    // User status already reloaded, button will update automatically
                   },
                 ),
               );
