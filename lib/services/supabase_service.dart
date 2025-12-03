@@ -7,20 +7,20 @@ class SupabaseService {
   factory SupabaseService() => _instance;
   SupabaseService._internal();
 
-  SupabaseClient get client => Supabase.instance.client;
+  SupabaseClient get client => Supabase. instance.client;
 
   // ============ FILE STORAGE ============
 
   /// Upload file to Supabase Storage
   /// Returns the public URL of the uploaded file
-  Future<String?> uploadFile({
+  Future<String? > uploadFile({
     required File file,
     required String bucket,
     required String path,
   }) async {
     try {
       final fileName = path.split('/').last;
-      final fileExtension = fileName.split('.').last.toLowerCase();
+      final fileExtension = fileName.split('.'). last. toLowerCase();
 
       // Validate file size (max 10MB)
       final fileSize = await file.length();
@@ -32,7 +32,7 @@ class SupabaseService {
       final allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
       if (!allowedExtensions.contains(fileExtension)) {
         throw Exception(
-          'Format file tidak didukung. Gunakan PDF atau gambar (JPG, PNG, GIF, WEBP)',
+          'Format file tidak didukung.  Gunakan PDF atau gambar (JPG, PNG, GIF, WEBP)',
         );
       }
 
@@ -62,7 +62,7 @@ class SupabaseService {
     required String path,
   }) async {
     try {
-      await client.storage.from(bucket).remove([path]);
+      await client.storage. from(bucket).remove([path]);
       print('File deleted successfully: $path');
     } catch (e) {
       print('Error deleting file: $e');
@@ -111,7 +111,7 @@ class SupabaseService {
           .from('users')
           .select()
           .eq('id', userId)
-          .single();
+          . single();
 
       return response;
     } catch (e) {
@@ -157,6 +157,7 @@ class SupabaseService {
   Future<Map<String, dynamic>?> addProject({
     required String title,
     required String supervisor,
+    required String supervisorId, // NEW
     required String description,
     required String deadline,
     required String participants,
@@ -169,6 +170,7 @@ class SupabaseService {
           .insert({
             'title': title,
             'supervisor': supervisor,
+            'supervisor_id': supervisorId, // NEW
             'description': description,
             'deadline': deadline,
             'participants': participants,
@@ -177,7 +179,7 @@ class SupabaseService {
             'status': 'tersedia',
           })
           .select()
-          .single();
+          . single();
 
       return response;
     } catch (e) {
@@ -190,7 +192,7 @@ class SupabaseService {
   Future<Map<String, dynamic>?> updateProject({
     required String id,
     String? title,
-    String? description,
+    String?  description,
     String? deadline,
     String? participants,
     List<String>? requirements,
@@ -211,7 +213,7 @@ class SupabaseService {
           .update(updateData)
           .eq('id', id)
           .select()
-          .single();
+          . single();
 
       return response;
     } catch (e) {
@@ -223,7 +225,7 @@ class SupabaseService {
   /// Delete project
   Future<void> deleteProject(String id) async {
     try {
-      await client.from(SupabaseConfig.projectsTable).delete().eq('id', id);
+      await client. from(SupabaseConfig. projectsTable).delete().eq('id', id);
     } catch (e) {
       print('Error deleting project: $e');
       rethrow;
@@ -238,7 +240,7 @@ class SupabaseService {
     try {
       final response = await client
           .from(SupabaseConfig.projectsTable)
-          .update({
+          . update({
             'status': status,
             'edited_at': DateTime.now().toIso8601String(),
           })
@@ -273,6 +275,21 @@ class SupabaseService {
     }
   }
 
+  /// Update project group chat ID (NEW)
+  Future<void> updateProjectGroupChatId(String projectId, String groupChatId) async {
+    try {
+      await client
+          .from(SupabaseConfig.projectsTable)
+          .update({'group_chat_id': groupChatId})
+          .eq('id', projectId);
+      
+      print('✅ Project $projectId linked to group chat $groupChatId');
+    } catch (e) {
+      print('Error updating project group chat id: $e');
+      rethrow;
+    }
+  }
+
   // ============ APPLICANTS & MEMBERS OPERATIONS ============
 
   /// Check if student already applied to project
@@ -285,7 +302,7 @@ class SupabaseService {
           .from(SupabaseConfig.applicantsTable)
           .select()
           .eq('project_id', projectId)
-          .eq('student_id', studentId)
+          . eq('student_id', studentId)
           .maybeSingle();
 
       return response != null;
@@ -361,7 +378,7 @@ class SupabaseService {
       if (members.isEmpty) return [];
 
       // Get user details for each member
-      final studentIds = members.map((m) => m['student_id'] as String).toList();
+      final studentIds = members. map((m) => m['student_id'] as String).toList();
 
       final users = await client
           .from('users')
@@ -383,13 +400,13 @@ class SupabaseService {
     try {
       // Update applicant status to 'accepted'
       await client
-          .from(SupabaseConfig.applicantsTable)
-          .update({'status': 'accepted'})
+          . from(SupabaseConfig. applicantsTable)
+          . update({'status': 'accepted'})
           .eq('project_id', projectId)
           .eq('student_id', studentId);
 
       // Add to members table
-      await client.from(SupabaseConfig.membersTable).insert({
+      await client. from(SupabaseConfig. membersTable).insert({
         'project_id': projectId,
         'student_id': studentId,
       });
@@ -408,7 +425,7 @@ class SupabaseService {
       await client
           .from(SupabaseConfig.applicantsTable)
           .update({'status': 'rejected'})
-          .eq('project_id', projectId)
+          . eq('project_id', projectId)
           .eq('student_id', studentId);
     } catch (e) {
       print('Error rejecting applicant: $e');
@@ -473,9 +490,9 @@ class SupabaseService {
     try {
       final response = await client
           .from(SupabaseConfig.portfolioCertificatesTable)
-          .select()
+          . select()
           .eq('user_id', userId)
-          .order('created_at', ascending: false);
+          . order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -691,7 +708,7 @@ class SupabaseService {
             'position': position,
             'duration': duration,
             'description': description,
-            'updated_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now(). toIso8601String(),
           })
           .eq('id', id)
           .select()
@@ -710,7 +727,7 @@ class SupabaseService {
       await client
           .from(SupabaseConfig.portfolioProjectsTable)
           .delete()
-          .eq('id', id);
+          . eq('id', id);
     } catch (e) {
       print('Error deleting portfolio project: $e');
       rethrow;

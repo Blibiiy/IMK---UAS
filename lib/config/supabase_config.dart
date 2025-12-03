@@ -18,27 +18,13 @@ class SupabaseConfig {
   static const String portfolioProjectsTable = 'portfolio_projects';
   static const String portfolioCertificatesTable = 'portfolio_certificates';
   static const String portfolioOrganizationsTable = 'portfolio_organizations';
-}
 
-/* 
-INSTRUKSI SETUP SUPABASE:
+  // Chat tables (NEW)
+  static const String conversationsTable = 'conversations';
+  static const String conversationParticipantsTable = 'conversation_participants';
+  static const String messagesTable = 'messages';
 
-1. Buat project di https://supabase.com
-2. Buat tabel 'projects' dengan struktur:
-   - id (uuid, primary key, default: gen_random_uuid())
-   - title (text)
-   - supervisor (text)
-   - description (text)
-   - deadline (text)
-   - participants (text)
-   - requirements (jsonb) - array of strings
-   - benefits (jsonb) - array of strings
-   - posted_at (timestamp with time zone, default: now())
-   - edited_at (timestamp with time zone, nullable)
-   - status (text, default: 'tersedia')
-   - created_at (timestamp with time zone, default: now())
-
-3. Enable Row Level Security (RLS) dan tambahkan policies sesuai kebutuhan
-4. Copy URL dan anon key dari Settings > API
-5. Paste URL dan anon key ke file ini
-*/
+  // Storage buckets
+  static const String portfoliosBucket = 'portfolios';
+  static const String chatAttachmentsBucket = 'chat-attachments';
+} 

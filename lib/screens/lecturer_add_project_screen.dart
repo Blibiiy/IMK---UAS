@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/project_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/chat_provider.dart'; // NEW
 import '../widgets/success_dialog.dart';
 
 class LecturerAddProjectScreen extends StatefulWidget {
@@ -28,7 +29,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
   @override
   void dispose() {
     _titleController.dispose();
-    _deadlineController.dispose();
+    _deadlineController. dispose();
     _participantsController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -54,7 +55,6 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
   }) {
     return InputDecoration(
       hintText: hintText,
-      // Placeholder dengan warna lebih transparan
       hintStyle: TextStyle(
         color: Colors.grey[400],
         fontWeight: FontWeight.w300,
@@ -65,7 +65,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+        borderSide: const BorderSide(color: Colors. black, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -76,7 +76,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
         borderSide: const BorderSide(color: Colors.black, width: 1.5),
       ),
       suffixIcon: suffixIcon != null
-          ? Padding(
+          ?  Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: suffixIcon,
             )
@@ -93,7 +93,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
   Future<void> _onPost() async {
     if (!_formKey.currentState!.validate()) return;
     if (_requirements.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger. of(context).showSnackBar(
         const SnackBar(
           content: Text('Tambahkan minimal 1 persyaratan project'),
         ),
@@ -109,18 +109,26 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
     );
 
     try {
-      // Ambil nama dosen yang sedang login
+      // Ambil user yang sedang login
       final currentUser = context.read<UserProvider>().currentUser;
       final lecturerName = currentUser?.fullName ?? 'Dosen Pembimbing';
+      final lecturerId = currentUser?.id ?? '';
 
+      if (lecturerId.isEmpty) {
+        throw Exception('User ID tidak ditemukan');
+      }
+
+      // Pass ChatProvider untuk auto-create group chat
       await context.read<ProjectProvider>().addProject(
-        title: _titleController.text.trim(),
-        deadline: _deadlineController.text.trim(),
-        participants: _participantsController.text.trim(),
-        description: _descriptionController.text.trim(),
-        requirements: _requirements,
-        lecturerFullName: lecturerName,
-      );
+            title: _titleController.text. trim(),
+            deadline: _deadlineController.text.trim(),
+            participants: _participantsController.text.trim(),
+            description: _descriptionController.text. trim(),
+            requirements: _requirements,
+            lecturerFullName: lecturerName,
+            lecturerId: lecturerId, // NEW
+            chatProvider: context.read<ChatProvider>(), // NEW
+          );
 
       // Close loading
       if (mounted) Navigator.of(context).pop();
@@ -131,7 +139,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
           context: context,
           barrierDismissible: false,
           builder: (_) => SuccessDialog(
-            message: 'Project Berhasil Di posting !',
+            message: 'Project Berhasil Di posting !\n\nGrup chat project otomatis dibuat.',
             onClose: () {
               // kembali ke dashboard dosen
               Navigator.of(context).pop();
@@ -182,7 +190,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: cs.onSurface,
+                    color: cs. onSurface,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -222,7 +230,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                     ),
                   ),
                   onTap: _pickDeadline,
-                  validator: (v) => (v == null || v.trim().isEmpty)
+                  validator: (v) => (v == null || v.trim(). isEmpty)
                       ? 'Tanggal wajib dipilih'
                       : null,
                 ),
@@ -240,14 +248,16 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                     hintText: 'Contoh: 5',
                     suffixText: 'Partisipan',
                   ),
-                  keyboardType: TextInputType.number,
+                  keyboardType: TextInputType. number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return 'Jumlah partisipan wajib diisi';
+                    }
                     final n = int.tryParse(v.trim());
-                    if (n == null || n <= 0)
+                    if (n == null || n <= 0) {
                       return 'Jumlah partisipan harus angka > 0';
+                    }
                     return null;
                   },
                 ),
@@ -256,7 +266,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                 // Persyaratan Project
                 Text(
                   'Persyaratan Project',
-                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                  style: TextStyle(fontSize: 14, color: cs. onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 RequirementInputChipField(
@@ -280,7 +290,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                   maxLines: 10,
                   decoration: _outlineInputDecoration(
                     hintText:
-                        'Contoh: Project ini bertujuan untuk mengembangkan aplikasi mobile yang dapat mendeteksi dan membaca plat nomor kendaraan secara otomatis menggunakan teknologi computer vision...',
+                        'Contoh: Project ini bertujuan untuk mengembangkan aplikasi mobile yang dapat mendeteksi dan membaca plat nomor kendaraan secara otomatis menggunakan teknologi computer vision.. .',
                   ),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Detail project wajib diisi'
@@ -341,7 +351,7 @@ class _RequirementInputChipFieldState extends State<RequirementInputChipField> {
 
   @override
   void dispose() {
-    _requirementController.dispose();
+    _requirementController. dispose();
     super.dispose();
   }
 
@@ -357,7 +367,7 @@ class _RequirementInputChipFieldState extends State<RequirementInputChipField> {
   }
 
   void _removeRequirement(int index) {
-    final updatedRequirements = [...widget.requirements];
+    final updatedRequirements = [... widget.requirements];
     updatedRequirements.removeAt(index);
     widget.onRequirementsChanged(updatedRequirements);
   }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/project_provider.dart';
 import '../providers/portfolio_provider.dart';
+import '../providers/chat_provider.dart'; // NEW
 import 'lecturer_members_screen.dart';
 import 'student_profile_detail_screen.dart';
 
@@ -22,20 +23,25 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
   void initState() {
     super.initState();
     // Load applicants from database when screen opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding. instance.addPostFrameCallback((_) {
       context.read<ProjectProvider>().loadApplicants(widget.projectId);
     });
   }
 
   Future<void> _accept(BuildContext context, String studentId) async {
     try {
+      // Pass ChatProvider untuk auto-add ke group chat
       await context.read<ProjectProvider>().acceptApplicant(
-        widget.projectId,
-        studentId,
-      );
-      if (!mounted) return;
+            widget.projectId,
+            studentId,
+            context.read<ChatProvider>(), // NEW
+          );
+      if (! mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mahasiswa berhasil diterima')),
+        const SnackBar(
+          content: Text('Mahasiswa berhasil diterima dan ditambahkan ke grup chat'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -50,10 +56,10 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
 
   Future<void> _reject(BuildContext context, String studentId) async {
     try {
-      await context.read<ProjectProvider>().rejectApplicant(
-        widget.projectId,
-        studentId,
-      );
+      await context.read<ProjectProvider>(). rejectApplicant(
+            widget.projectId,
+            studentId,
+          );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Mahasiswa berhasil ditolak')),
@@ -71,7 +77,7 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs = Theme.of(context). colorScheme;
     final project = context.watch<ProjectProvider>().getProjectById(
       widget.projectId,
     );
@@ -89,11 +95,11 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
                 children: [
                   IconButton(
                     icon: SvgPicture.asset(
-                      'assets/logos/back.svg',
+                      'assets/logos/back. svg',
                       width: 24,
                       height: 24,
                     ),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator. pop(context),
                   ),
                   const Spacer(),
                   ElevatedButton(
@@ -107,7 +113,7 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
+                    style: ElevatedButton. styleFrom(
                       backgroundColor: const Color(0xFF2E5AAC),
                       foregroundColor: Colors.white,
                       elevation: 0,
@@ -134,40 +140,40 @@ class _LecturerApplicantsScreenState extends State<LecturerApplicantsScreen> {
                 child: project == null
                     ? const Center(child: Text('Project tidak ditemukan'))
                     : project.applicants.isEmpty
-                    ? Center(
-                        child: Text(
-                          'Belum Ada Pendaftar',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: cs.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: project.applicants.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
-                        itemBuilder: (context, index) {
-                          final applicant = project.applicants[index];
-                          return InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => StudentProfileDetailScreen(
-                                    student: applicant,
-                                  ),
+                        ? Center(
+                            child: Text(
+                              'Belum Ada Pendaftar',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: cs.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: project.applicants.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              final applicant = project.applicants[index];
+                              return InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => StudentProfileDetailScreen(
+                                        student: applicant,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _ApplicantCard(
+                                  applicant: applicant,
+                                  onAccept: () => _accept(context, applicant.id),
+                                  onReject: () => _reject(context, applicant.id),
                                 ),
                               );
                             },
-                            child: _ApplicantCard(
-                              applicant: applicant,
-                              onAccept: () => _accept(context, applicant.id),
-                              onReject: () => _reject(context, applicant.id),
-                            ),
-                          );
-                        },
-                      ),
+                          ),
               ),
             ],
           ),
@@ -192,7 +198,7 @@ class _ApplicantCard extends StatelessWidget {
     final skills = <String>{};
     for (var item in applicant.portfolio) {
       if (item is CertificatePortfolio) {
-        skills.addAll(item.skills);
+        skills. addAll(item.skills);
       }
     }
     return skills.take(3).toList();
@@ -200,13 +206,13 @@ class _ApplicantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs = Theme.of(context). colorScheme;
     final topSkills = _getTopSkills();
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cs.surfaceVariant,
+        color: cs. surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -251,7 +257,7 @@ class _ApplicantCard extends StatelessWidget {
                       applicant.program,
                       style: TextStyle(
                         fontSize: 13,
-                        color: cs.onSurfaceVariant,
+                        color: cs. onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -264,7 +270,7 @@ class _ApplicantCard extends StatelessWidget {
                     onPressed: onAccept,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E5AAC),
-                      foregroundColor: Colors.white,
+                      foregroundColor: Colors. white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -286,7 +292,7 @@ class _ApplicantCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   OutlinedButton(
                     onPressed: onReject,
-                    style: OutlinedButton.styleFrom(
+                    style: OutlinedButton. styleFrom(
                       foregroundColor: const Color(0xFFD32F2F),
                       side: const BorderSide(
                         color: Color(0xFFD32F2F),
@@ -325,7 +331,7 @@ class _ApplicantCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2E5AAC).withOpacity(0.1),
+                    color: const Color(0xFF2E5AAC). withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: const Color(0xFF2E5AAC).withOpacity(0.3),

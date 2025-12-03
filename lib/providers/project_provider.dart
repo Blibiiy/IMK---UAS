@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 // Reuse model PortfolioItem dari provider portfolio
 import './portfolio_provider.dart';
+import './chat_provider.dart';
 import '../services/supabase_service.dart';
 
 enum ProjectStatus { tersedia, diproses, diterima, selesai }
@@ -26,7 +27,7 @@ class Student {
     String? name,
     String? program,
     String? avatarUrl,
-    List<PortfolioItem>? portfolio,
+    List<PortfolioItem>?  portfolio,
   }) {
     return Student(
       id: id ?? this.id,
@@ -40,7 +41,7 @@ class Student {
   // Factory method from JSON (from Supabase users table)
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
-      id: json['id'].toString(),
+      id: json['id']. toString(),
       name: json['full_name'] ?? '',
       program: json['program'] ?? '',
       avatarUrl:
@@ -54,23 +55,28 @@ class Project {
   final String id;
   final String title;
   final String supervisor; // "Dosen Pembimbing: <Nama Lengkap>"
+  final String supervisorId; // ID dosen (NEW - untuk chat)
   final String description; // Detail project
   final String deadline;
   final String participants;
   final List<String> requirements;
   final List<String> benefits;
   final DateTime postedAt;
-  final DateTime? editedAt;
+  final DateTime?  editedAt;
   final ProjectStatus status;
 
   // Kolaborasi
   final List<Student> members; // diterima
   final List<Student> applicants; // pendaftar
+  
+  // Chat (NEW)
+  final String? groupChatId; // ID group chat untuk project ini
 
   Project({
-    required this.id,
+    required this. id,
     required this.title,
     required this.supervisor,
+    required this.supervisorId,
     required this.description,
     required this.deadline,
     required this.participants,
@@ -80,7 +86,8 @@ class Project {
     this.editedAt,
     required this.status,
     required this.members,
-    required this.applicants,
+    required this. applicants,
+    this.groupChatId,
   });
 
   String get statusText {
@@ -106,11 +113,13 @@ class Project {
     ProjectStatus? status,
     List<Student>? members,
     List<Student>? applicants,
+    String? groupChatId,
   }) {
     return Project(
       id: id,
       title: title ?? this.title,
       supervisor: supervisor,
+      supervisorId: supervisorId,
       description: description ?? this.description,
       deadline: deadline ?? this.deadline,
       participants: participants ?? this.participants,
@@ -121,6 +130,7 @@ class Project {
       status: status ?? this.status,
       members: members ?? this.members,
       applicants: applicants ?? this.applicants,
+      groupChatId: groupChatId ?? this.groupChatId,
     );
   }
 
@@ -130,7 +140,7 @@ class Project {
     if (json['status'] == 'diproses') {
       status = ProjectStatus.diproses;
     } else if (json['status'] == 'diterima') {
-      status = ProjectStatus.diterima;
+      status = ProjectStatus. diterima;
     } else if (json['status'] == 'selesai') {
       status = ProjectStatus.selesai;
     }
@@ -139,11 +149,12 @@ class Project {
       id: json['id'].toString(),
       title: json['title'] ?? '',
       supervisor: json['supervisor'] ?? '',
+      supervisorId: json['supervisor_id']?.toString() ?? '',
       description: json['description'] ?? '',
-      deadline: json['deadline'] ?? '',
+      deadline: json['deadline'] ??  '',
       participants: json['participants'] ?? '',
       requirements: json['requirements'] != null
-          ? List<String>.from(json['requirements'])
+          ? List<String>. from(json['requirements'])
           : [],
       benefits: json['benefits'] != null
           ? List<String>.from(json['benefits'])
@@ -157,6 +168,7 @@ class Project {
       status: status,
       members: [], // Will be loaded separately if needed
       applicants: [], // Will be loaded separately if needed
+      groupChatId: json['group_chat_id']?.toString(),
     );
   }
 
@@ -166,6 +178,7 @@ class Project {
       'id': id,
       'title': title,
       'supervisor': supervisor,
+      'supervisor_id': supervisorId,
       'description': description,
       'deadline': deadline,
       'participants': participants,
@@ -173,7 +186,8 @@ class Project {
       'benefits': benefits,
       'posted_at': postedAt.toIso8601String(),
       'edited_at': editedAt?.toIso8601String(),
-      'status': statusText.toLowerCase(),
+      'status': statusText. toLowerCase(),
+      'group_chat_id': groupChatId,
     };
   }
 }
@@ -193,6 +207,7 @@ class ProjectProvider extends ChangeNotifier {
       id: '1',
       title: 'Project 1',
       supervisor: 'Dosen Pembimbing: Mas Isra',
+      supervisorId: 'dummy-lecturer-id',
       description:
           'Project Mobile App Yang Ditujukan Untuk Membantu Riset Dan Penelitian Terhadap Masalah 19 Juta Lapangan Pekerjaan',
       deadline: '10 Oktober 2025',
@@ -214,12 +229,12 @@ class ProjectProvider extends ChangeNotifier {
           id: 's1',
           name: 'Isra',
           program: 'Prodi Informatika (S1)',
-          avatarUrl: 'https://placehold.co/200x200/999/FFF?text=Isra',
+          avatarUrl: 'https://placehold. co/200x200/999/FFF?text=Isra',
           portfolio: [
             ProjectPortfolio(
               id: 'p_isra_1',
               title: 'Project Deteksi Plat Kendaraan Bermotor',
-              lecturer: 'Dr. Bahlul Amba, S.Pd',
+              lecturer: 'Dr. Bahlul Amba, S. Pd',
               deadline: '10 Oktober 2025',
               description:
                   'Project riset pendeteksian plat nomor berbasis visi komputer.',
@@ -233,7 +248,7 @@ class ProjectProvider extends ChangeNotifier {
               startDate: '10 Oktober 2025',
               endDate: '10 Oktober 2027',
               skills: ['Python', 'ML', 'Leadership'],
-              certificateFile: 'IBM-AI.pdf',
+              certificateFile: 'IBM-AI. pdf',
             ),
             OrganizationPortfolio(
               id: 'o_isra_1',
@@ -257,7 +272,7 @@ class ProjectProvider extends ChangeNotifier {
               startDate: '10 Oktober 2025',
               endDate: '10 Oktober 2027',
               skills: ['AI', 'Python'],
-              certificateFile: 'cert.pdf',
+              certificateFile: 'cert. pdf',
             ),
           ],
         ),
@@ -282,14 +297,15 @@ class ProjectProvider extends ChangeNotifier {
       id: '2',
       title: 'Project 2',
       supervisor: 'Dosen Pembimbing: Pak Budi',
+      supervisorId: 'dummy-lecturer-id-2',
       description:
           'Project Lorem Ipsum Project Lorem Ipsum Project Lorem Ipsum',
       deadline: '10 Oktober 2025',
       participants: '10',
-      status: ProjectStatus.diproses,
+      status: ProjectStatus. diproses,
       requirements: [
         '1. Requirement Lorem Ipsum',
-        '2. Requirement Lorem Ipsum',
+        '2.  Requirement Lorem Ipsum',
       ],
       benefits: ['1. Benefit Lorem Ipsum', '2. Benefit Lorem Ipsum'],
       postedAt: DateTime(2025, 10, 5, 14, 30),
@@ -300,6 +316,7 @@ class ProjectProvider extends ChangeNotifier {
       id: '3',
       title: 'Project 3',
       supervisor: 'Dosen Pembimbing: Bu Ani',
+      supervisorId: 'dummy-lecturer-id-3',
       description:
           'Project Lorem Ipsum Project Lorem Ipsum Project Lorem Ipsum',
       deadline: '10 Oktober 2025',
@@ -307,9 +324,9 @@ class ProjectProvider extends ChangeNotifier {
       status: ProjectStatus.tersedia,
       requirements: [
         '1. Requirement Lorem Ipsum',
-        '2. Requirement Lorem Ipsum',
+        '2.  Requirement Lorem Ipsum',
       ],
-      benefits: ['1. Benefit Lorem Ipsum', '2. Benefit Lorem Ipsum'],
+      benefits: ['1.  Benefit Lorem Ipsum', '2.  Benefit Lorem Ipsum'],
       postedAt: DateTime(2025, 10, 7, 8, 0),
       members: [],
       applicants: [],
@@ -335,7 +352,7 @@ class ProjectProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final data = await _supabaseService.getAllProjects();
+      final data = await _supabaseService. getAllProjects();
       _projects = data.map((json) => Project.fromJson(json)).toList();
     } catch (e) {
       _errorMessage = 'Gagal memuat projects: $e';
@@ -350,7 +367,7 @@ class ProjectProvider extends ChangeNotifier {
 
   Project? getProjectById(String id) {
     try {
-      return _projects.firstWhere((p) => p.id == id);
+      return _projects.firstWhere((p) => p. id == id);
     } catch (_) {
       return null;
     }
@@ -407,7 +424,7 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<void> completeProject(String projectId) async {
     try {
-      final response = await _supabaseService.updateProjectStatus(
+      final response = await _supabaseService. updateProjectStatus(
         id: projectId,
         status: 'selesai',
       );
@@ -415,7 +432,7 @@ class ProjectProvider extends ChangeNotifier {
       if (response != null) {
         final idx = _projects.indexWhere((p) => p.id == projectId);
         if (idx != -1) {
-          _projects[idx] = _projects[idx].copyWith(
+          _projects[idx] = _projects[idx]. copyWith(
             status: ProjectStatus.selesai,
           );
           notifyListeners();
@@ -428,6 +445,7 @@ class ProjectProvider extends ChangeNotifier {
     }
   }
 
+  // NEW: Add project dengan auto-create group chat
   Future<void> addProject({
     required String title,
     required String deadline,
@@ -435,11 +453,14 @@ class ProjectProvider extends ChangeNotifier {
     required String description,
     required List<String> requirements,
     required String lecturerFullName,
+    required String lecturerId,
+    required ChatProvider chatProvider, // Pass ChatProvider untuk create group
   }) async {
     try {
       final response = await _supabaseService.addProject(
         title: title,
         supervisor: 'Dosen Pembimbing: $lecturerFullName',
+        supervisorId: lecturerId,
         description: description,
         deadline: deadline,
         participants: participants,
@@ -448,6 +469,21 @@ class ProjectProvider extends ChangeNotifier {
       );
 
       if (response != null) {
+        final projectId = response['id']. toString();
+        
+        // AUTO-CREATE GROUP CHAT untuk project ini
+        final groupChatId = await chatProvider.createProjectGroupChat(
+          projectId,
+          title,
+          [lecturerId], // Awalnya hanya dosen
+        );
+
+        // Update project dengan group_chat_id
+        if (groupChatId != null) {
+          await _supabaseService.updateProjectGroupChatId(projectId, groupChatId);
+          response['group_chat_id'] = groupChatId;
+        }
+
         final newProject = Project.fromJson(response);
         _projects.insert(0, newProject);
         notifyListeners();
@@ -493,7 +529,7 @@ class ProjectProvider extends ChangeNotifier {
 
   Future<void> deleteProject(String id) async {
     try {
-      await _supabaseService.deleteProject(id);
+      await _supabaseService. deleteProject(id);
       _projects.removeWhere((p) => p.id == id);
       notifyListeners();
     } catch (e) {
@@ -508,7 +544,7 @@ class ProjectProvider extends ChangeNotifier {
   /// Load applicants for a specific project from database
   Future<void> loadApplicants(String projectId) async {
     try {
-      final data = await _supabaseService.getProjectApplicants(projectId);
+      final data = await _supabaseService. getProjectApplicants(projectId);
       final applicants = data.map((json) => Student.fromJson(json)).toList();
 
       final idx = _projects.indexWhere((p) => p.id == projectId);
@@ -525,9 +561,9 @@ class ProjectProvider extends ChangeNotifier {
   Future<void> loadMembers(String projectId) async {
     try {
       final data = await _supabaseService.getProjectMembers(projectId);
-      final members = data.map((json) => Student.fromJson(json)).toList();
+      final members = data.map((json) => Student. fromJson(json)).toList();
 
-      final idx = _projects.indexWhere((p) => p.id == projectId);
+      final idx = _projects. indexWhere((p) => p.id == projectId);
       if (idx != -1) {
         _projects[idx] = _projects[idx].copyWith(members: members);
         notifyListeners();
@@ -537,10 +573,15 @@ class ProjectProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> acceptApplicant(String projectId, String studentId) async {
+  // NEW: Accept applicant dengan auto-add ke group chat
+  Future<void> acceptApplicant(
+    String projectId,
+    String studentId,
+    ChatProvider chatProvider,
+  ) async {
     try {
       // Update database
-      await _supabaseService.acceptApplicant(
+      await _supabaseService. acceptApplicant(
         projectId: projectId,
         studentId: studentId,
       );
@@ -548,6 +589,15 @@ class ProjectProvider extends ChangeNotifier {
       // Reload both lists from database
       await loadApplicants(projectId);
       await loadMembers(projectId);
+
+      // AUTO-ADD ke group chat jika ada
+      final project = getProjectById(projectId);
+      if (project?. groupChatId != null) {
+        await chatProvider.addMemberToGroupChat(
+          project! .groupChatId!,
+          studentId,
+        );
+      }
     } catch (e) {
       print('Error accepting applicant: $e');
       rethrow;
@@ -578,8 +628,8 @@ class ProjectProvider extends ChangeNotifier {
       final projectStatus = projectData?['status'] ?? 'tersedia';
 
       // Check if user is a member
-      final members = await _supabaseService.getProjectMembers(projectId);
-      final isMember = members.any((m) => m['id'].toString() == userId);
+      final members = await _supabaseService. getProjectMembers(projectId);
+      final isMember = members.any((m) => m['id']. toString() == userId);
 
       // If user is a member, return status based on project status
       if (isMember) {

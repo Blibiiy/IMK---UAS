@@ -3,8 +3,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/project_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/chat_provider.dart'; // NEW
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/success_dialog.dart';
+import 'chat_detail_screen.dart'; // NEW
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -34,9 +36,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
 
     final status = await context.read<ProjectProvider>().getUserStatusInProject(
-      widget.projectId,
-      userId,
-    );
+          widget.projectId,
+          userId,
+        );
 
     setState(() {
       _userStatus = status;
@@ -79,18 +81,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               // Reload user status after successful registration
               await _loadUserStatus();
 
-              if (!context.mounted) return;
+              if (! context.mounted) return;
               Navigator.pop(context); // Close loading
 
               showDialog(
                 context: context,
                 barrierDismissible: false,
                 builder: (dialogContext) => SuccessDialog(
-                  message: 'Pendaftaran project berhasil dilakukan!',
+                  message: 'Pendaftaran project berhasil dilakukan! ',
                   onClose: () {
-                    // Just close the success dialog, stay on project detail page
-                    Navigator.of(dialogContext).pop();
-                    // User status already reloaded, button will update automatically
+                    Navigator. of(dialogContext).pop();
                   },
                 ),
               );
@@ -98,7 +98,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               if (!context.mounted) return;
               Navigator.pop(context); // Close loading
 
-              // Parse error message untuk tampilkan yang lebih user-friendly
               String errorMessage = 'Gagal mendaftar ke project';
               final errorString = e.toString();
 
@@ -108,10 +107,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   errorString.contains('23505')) {
                 errorMessage = 'Anda sudah mendaftar ke project ini sebelumnya';
               } else if (errorString.contains('Exception:')) {
-                // Extract message from Exception
                 final match = RegExp(
-                  r'Exception: (.+)',
-                ).firstMatch(errorString);
+                  r'Exception: (. +)',
+                ). firstMatch(errorString);
                 if (match != null) {
                   errorMessage = match.group(1) ?? errorMessage;
                 }
@@ -132,6 +130,109 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       },
     );
   }
+
+  // NEW: Handle chat dengan dosen
+    Future<void> _handleChatWithLecturer() async {
+    final currentUser = context.read<UserProvider>().currentUser;
+    final project = context.read<ProjectProvider>().getProjectById(widget.projectId);
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anda harus login terlebih dahulu')),
+      );
+      return;
+    }
+
+    if (project == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Project tidak ditemukan')),
+      );
+      return;
+    }
+
+    // Debug log
+    print('🔍 Current user: ${currentUser.id}');
+    print('🔍 Project supervisor ID: ${project.supervisorId}');
+
+    if (project.supervisorId. isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ID dosen tidak tersedia.  Pastikan project dibuat dengan benar.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // Get or create private conversation
+      final chatProvider = context.read<ChatProvider>();
+      final conversationId = await chatProvider.getOrCreatePrivateChat(
+        currentUser.id,
+        project.supervisorId,
+      );
+
+      if (! mounted) return;
+      Navigator.pop(context); // Close loading
+
+      if (conversationId != null) {
+        // Reload conversations to ensure it's in the list
+        await chatProvider.loadConversations(currentUser.id);
+
+        if (! mounted) return;
+
+        // Get conversation detail
+        final conversation = chatProvider.conversations
+            .where((c) => c.id == conversationId)
+            .firstOrNull;
+
+        if (conversation != null) {
+          // Navigate to chat detail
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatDetailScreen(conversation: conversation),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Chat berhasil dibuat, silakan cek halaman Chat'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal membuat chat. Periksa koneksi dan coba lagi.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error in _handleChatWithLecturer: $e');
+      
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +289,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             const SizedBox(height: 4),
             Text(
               'Deadline: ${project.deadline}',
-              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+              style: TextStyle(fontSize: 14, color: cs. onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             Divider(color: cs.outline, thickness: 1),
@@ -207,7 +308,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ...project.requirements.map(
+            ... project.requirements.map(
               (requirement) => Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(
@@ -215,7 +316,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
-                    color: cs.onSurface,
+                    color: cs. onSurface,
                   ),
                 ),
               ),
@@ -225,8 +326,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               'Manfaat Melakukan Project :',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: cs.onSurface,
+                fontWeight: FontWeight. bold,
+                color: cs. onSurface,
               ),
             ),
             const SizedBox(height: 12),
@@ -250,8 +351,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {},
-                      child: const Text('Chat'),
+                      onPressed: _handleChatWithLecturer, // NEW: Chat dengan dosen
+                      child: const Text('Chat Dosen'),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -260,17 +361,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       onPressed: _isLoadingStatus
                           ? null
                           : (project.status == ProjectStatus.tersedia &&
-                                _userStatus == 'Tersedia')
-                          ? () => _showConfirmationDialog(context)
-                          : null,
+                                  _userStatus == 'Tersedia')
+                              ? () => _showConfirmationDialog(context)
+                              : null,
                       child: Text(
                         _isLoadingStatus
                             ? 'Loading...'
                             : _userStatus == 'Diproses'
-                            ? 'Diproses'
-                            : _userStatus == 'Diterima'
-                            ? 'Sudah Diterima'
-                            : 'Daftar >>',
+                                ? 'Diproses'
+                                : _userStatus == 'Diterima'
+                                    ? 'Sudah Diterima'
+                                    : 'Daftar >>',
                       ),
                     ),
                   ),
@@ -282,19 +383,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2E5AAC), // Blue background
+                  color: const Color(0xFF2E5AAC),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.check_circle,
                       color: Colors.white,
                       size: 24,
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
+                    SizedBox(width: 12),
+                    Text(
                       'Project Selesai',
                       style: TextStyle(
                         fontSize: 16,

@@ -1,28 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/chat_provider.dart';
+import '../providers/user_provider.dart';
+import '../models/chat_models.dart';
 import 'chat_detail_screen.dart';
-
-enum ConversationType { private, group }
-
-enum FilterType { semua, grup, private }
-
-class Conversation {
-  final String id;
-  final String name;
-  final String lastMessage;
-  final String timestamp;
-  final String? avatarUrl;
-  final ConversationType type;
-
-  Conversation({
-    required this.id,
-    required this.name,
-    required this.lastMessage,
-    required this.timestamp,
-    this.avatarUrl,
-    required this.type,
-  });
-}
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -32,66 +15,37 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
-  FilterType _currentFilter = FilterType.semua;
+  String _selectedFilter = 'Semua';
 
-  final List<Conversation> _conversations = [
-    Conversation(
-      id: '1',
-      name: 'ISRA',
-      lastMessage: 'Lorem Ipsum ...',
-      timestamp: '03:00',
-      avatarUrl: 'https://placehold.co/100x100/E0E0E0/E0E0E0',
-      type: ConversationType.private,
-    ),
-    Conversation(
-      id: '2',
-      name: 'Aldi',
-      lastMessage: 'Lorem Ipsum ...',
-      timestamp: '03:00',
-      avatarUrl: 'https://placehold.co/100x100/E0E0E0/E0E0E0',
-      type: ConversationType.private,
-    ),
-    Conversation(
-      id: '3',
-      name: 'Project Kampus',
-      lastMessage: 'Lorem Ipsum ...',
-      timestamp: '03:00',
-      type: ConversationType.group,
-    ),
-    Conversation(
-      id: '4',
-      name: 'Project 1',
-      lastMessage: 'Lorem Ipsum ...',
-      timestamp: '03:00',
-      type: ConversationType.group,
-    ),
-    Conversation(
-      id: '5',
-      name: 'Project 3',
-      lastMessage: 'Lorem Ipsum ...',
-      timestamp: '03:00',
-      type: ConversationType.group,
-    ),
-  ];
+  @override
+  void initState() {
+    super. initState();
+    // Load conversations when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = context.read<UserProvider>().currentUser?.id;
+      if (userId != null) {
+        context.read<ChatProvider>().loadConversations(userId);
+      }
+    });
+  }
 
-  List<Conversation> get _filteredConversations {
-    switch (_currentFilter) {
-      case FilterType.grup:
-        return _conversations
-            .where((c) => c.type == ConversationType.group)
-            .toList();
-      case FilterType.private:
-        return _conversations
-            .where((c) => c.type == ConversationType.private)
-            .toList();
-      case FilterType.semua:
-        return _conversations;
+  List<Conversation> _filterConversations(List<Conversation> conversations) {
+    if (_selectedFilter == 'Semua') return conversations;
+    if (_selectedFilter == 'Grup') {
+      return conversations.where((c) => c.type == ConversationType.group).toList();
     }
+    if (_selectedFilter == 'Private') {
+      return conversations.where((c) => c.type == ConversationType.private).toList();
+    }
+    return conversations;
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final chatProvider = context.watch<ChatProvider>();
+    final conversations = _filterConversations(chatProvider.conversations);
+
     return Scaffold(
       backgroundColor: cs.surface,
       body: SafeArea(
@@ -124,53 +78,54 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             // Filter Buttons
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 16,
-              ),
-              child: SegmentedButton<FilterType>(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+              child: SegmentedButton<String>(
                 segments: const [
-                  ButtonSegment<FilterType>(
-                    value: FilterType.semua,
-                    label: Text('Semua'),
-                  ),
-                  ButtonSegment<FilterType>(
-                    value: FilterType.grup,
-                    label: Text('Grup'),
-                  ),
-                  ButtonSegment<FilterType>(
-                    value: FilterType.private,
-                    label: Text('Private'),
-                  ),
+                  ButtonSegment<String>(value: 'Semua', label: Text('Semua')),
+                  ButtonSegment<String>(value: 'Grup', label: Text('Grup')),
+                  ButtonSegment<String>(value: 'Private', label: Text('Private')),
                 ],
-                selected: {_currentFilter},
-                onSelectionChanged: (Set<FilterType> newSelection) {
+                selected: {_selectedFilter},
+                onSelectionChanged: (Set<String> newSelection) {
                   setState(() {
-                    _currentFilter = newSelection.first;
+                    _selectedFilter = newSelection.first;
                   });
                 },
               ),
             ),
             // Conversations List
             Expanded(
-              child: ListView.builder(
-                itemCount: _filteredConversations.length,
-                itemBuilder: (context, index) {
-                  final conversation = _filteredConversations[index];
-                  return ConversationListTile(
-                    conversation: conversation,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ChatDetailScreen(conversation: conversation),
+              child: chatProvider.isLoadingConversations
+                  ?  const Center(child: CircularProgressIndicator())
+                  : conversations.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Belum ada chat',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: conversations.length,
+                          itemBuilder: (context, index) {
+                            final conversation = conversations[index];
+                            return ConversationListTile(
+                              conversation: conversation,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatDetailScreen(
+                                      conversation: conversation,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -180,6 +135,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
 }
 
 // Conversation List Tile Component
+// ...  (import tetap sama)
+
+// UPDATED: ConversationListTile dengan unread counter
+// ...  (import tetap sama)
+
+// UPDATED: ConversationListTile dengan unread counter
 class ConversationListTile extends StatelessWidget {
   final Conversation conversation;
   final VoidCallback onTap;
@@ -210,22 +171,25 @@ class ConversationListTile extends StatelessWidget {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: cs.surface,
+                      color: cs.primaryContainer,
                       shape: BoxShape.circle,
-                      border: Border.all(color: cs.outline, width: 2),
+                      border: Border.all(color: cs.primary, width: 2),
                     ),
                     child: Icon(
                       Icons.group_outlined,
                       size: 24,
-                      color: cs.onSurface,
+                      color: cs.primary,
                     ),
                   )
                 : CircleAvatar(
                     radius: 25,
                     backgroundImage: conversation.avatarUrl != null
-                        ? NetworkImage(conversation.avatarUrl!)
+                        ?  NetworkImage(conversation.avatarUrl!)
                         : null,
-                    backgroundColor: cs.surface,
+                    backgroundColor: cs.primaryContainer,
+                    child: conversation.avatarUrl == null
+                        ?  Icon(Icons.person, color: cs.primary)
+                        : null,
                   ),
             const SizedBox(width: 16),
             // Name and Last Message
@@ -233,28 +197,81 @@ class ConversationListTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    conversation.name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: cs.onSurface,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          conversation.name,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: cs. onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        conversation.getTimestamp(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    conversation.lastMessage,
-                    style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          conversation.lastMessageContent ??  'Belum ada pesan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: cs.onSurfaceVariant,
+                            fontWeight: conversation.unreadCount > 0
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // NEW: Unread counter badge
+                      if (conversation. unreadCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cs.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 24,
+                            minHeight: 24,
+                          ),
+                          child: Center(
+                            child: Text(
+                              conversation.unreadCount > 99
+                                  ? '99+'
+                                  : '${conversation.unreadCount}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: cs.onPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
-            ),
-            // Timestamp
-            Text(
-              conversation.timestamp,
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
             ),
           ],
         ),

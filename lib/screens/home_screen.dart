@@ -3,13 +3,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/project_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/chat_provider.dart'; // ONLY NEW IMPORT
 import 'project_detail_screen.dart';
 import 'chat_list_screen.dart';
 import 'profile_screen.dart';
 import '../theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super. key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -20,23 +21,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String _selectedFilter = 'Semua';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  Map<String, String> _projectStatuses =
-      {}; // projectId -> status for current user
+  Map<String, String> _projectStatuses = {};
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Load projects from Supabase when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProjectsAndStatuses();
+      
+      // ONLY NEW: Load conversations untuk badge counter
+      final userId = context.read<UserProvider>().currentUser?.id;
+      if (userId != null) {
+        context.read<ChatProvider>().loadConversations(userId);
+      }
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // Refresh status when app resumes
     if (state == AppLifecycleState.resumed) {
       _loadUserStatusForAllProjects();
     }
@@ -50,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _loadProjectsAndStatuses() async {
-    await context.read<ProjectProvider>().loadProjects();
+    await context.read<ProjectProvider>(). loadProjects();
     await _loadUserStatusForAllProjects();
   }
 
@@ -92,11 +96,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  // ONLY NEW METHOD: Calculate total unread count
+  int _getTotalUnreadCount() {
+    final conversations = context.watch<ChatProvider>().conversations;
+    return conversations.fold<int>(0, (sum, conv) => sum + conv.unreadCount);
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final userProvider = context.watch<UserProvider>();
-    final currentUser = userProvider.currentUser;
+    final currentUser = userProvider. currentUser;
+    final totalUnread = _getTotalUnreadCount(); // ONLY NEW
 
     return Scaffold(
       body: RefreshIndicator(
@@ -105,11 +116,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              // Header dengan gradient
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
-                decoration: AppTheme.headerDecoration(cs),
+                decoration: AppTheme. headerDecoration(cs),
                 child: StudentHeaderCard(
                   name: currentUser?.fullName ?? 'User',
                   program: currentUser?.program ?? 'Program Studi',
@@ -119,14 +129,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
               const SizedBox(height: 16),
-              // Search Bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: TextField(
                   controller: _searchController,
                   onChanged: (value) {
                     setState(() {
-                      _searchQuery = value.toLowerCase();
+                      _searchQuery = value. toLowerCase();
                     });
                   },
                   decoration: InputDecoration(
@@ -137,10 +146,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: cs.onSurfaceVariant,
+                      color: cs. onSurfaceVariant,
                       size: 22,
                     ),
-                    suffixIcon: _searchQuery.isNotEmpty
+                    suffixIcon: _searchQuery. isNotEmpty
                         ? IconButton(
                             icon: Icon(
                               Icons.clear,
@@ -166,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius. circular(16),
                       borderSide: BorderSide(color: cs.primary, width: 2),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
@@ -188,32 +197,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       });
                     },
                     itemBuilder: (BuildContext context) => const [
-                      PopupMenuItem<String>(
-                        value: 'Semua',
-                        child: Text('Semua'),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'Tersedia',
-                        child: Text('Tersedia'),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'Diproses',
-                        child: Text('Diproses'),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'Diterima',
-                        child: Text('Diterima'),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'Selesai',
-                        child: Text('Selesai'),
-                      ),
+                      PopupMenuItem<String>(value: 'Semua', child: Text('Semua')),
+                      PopupMenuItem<String>(value: 'Tersedia', child: Text('Tersedia')),
+                      PopupMenuItem<String>(value: 'Diproses', child: Text('Diproses')),
+                      PopupMenuItem<String>(value: 'Diterima', child: Text('Diterima')),
+                      PopupMenuItem<String>(value: 'Selesai', child: Text('Selesai')),
                     ],
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       decoration: BoxDecoration(
                         color: cs.secondaryContainer,
                         borderRadius: BorderRadius.circular(20),
@@ -230,11 +221,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(
-                            Icons.filter_list,
-                            size: 20,
-                            color: cs.onSecondaryContainer,
-                          ),
+                          Icon(Icons.filter_list, size: 20, color: cs.onSecondaryContainer),
                         ],
                       ),
                     ),
@@ -246,37 +233,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Consumer<ProjectProvider>(
                   builder: (context, projectProvider, child) {
-                    // Filter projects based on selected filter and search query
-                    final filteredProjects = projectProvider.projects.where((
-                      project,
-                    ) {
-                      // Filter by status
-                      final userStatus =
-                          _projectStatuses[project.id] ?? 'Tersedia';
+                    final filteredProjects = projectProvider.projects.where((project) {
+                      final userStatus = _projectStatuses[project.id] ?? 'Tersedia';
                       final statusMatch =
-                          _selectedFilter == 'Semua' ||
-                          userStatus == _selectedFilter;
-
-                      // Filter by search query
+                          _selectedFilter == 'Semua' || userStatus == _selectedFilter;
                       final titleMatch =
                           _searchQuery.isEmpty ||
                           project.title.toLowerCase().contains(_searchQuery);
-
                       return statusMatch && titleMatch;
                     }).toList();
 
                     if (filteredProjects.isEmpty) {
                       String emptyMessage = 'Tidak ada project';
-                      if (_searchQuery.isNotEmpty &&
-                          _selectedFilter != 'Semua') {
+                      if (_searchQuery. isNotEmpty && _selectedFilter != 'Semua') {
                         emptyMessage =
                             'Tidak ada project yang cocok dengan "$_searchQuery" untuk kategori $_selectedFilter';
                       } else if (_searchQuery.isNotEmpty) {
-                        emptyMessage =
-                            'Tidak ada project yang cocok dengan "$_searchQuery"';
+                        emptyMessage = 'Tidak ada project yang cocok dengan "$_searchQuery"';
                       } else if (_selectedFilter != 'Semua') {
-                        emptyMessage =
-                            'Tidak ada project untuk kategori $_selectedFilter';
+                        emptyMessage = 'Tidak ada project untuk kategori $_selectedFilter';
                       }
                       return Center(
                         child: Padding(
@@ -284,10 +259,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           child: Text(
                             emptyMessage,
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: cs.onSurfaceVariant,
-                            ),
+                            style: TextStyle(fontSize: 16, color: cs. onSurfaceVariant),
                           ),
                         ),
                       );
@@ -299,8 +271,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       itemCount: filteredProjects.length,
                       itemBuilder: (context, index) {
                         final project = filteredProjects[index];
-                        final userStatus =
-                            _projectStatuses[project.id] ?? 'Tersedia';
+                        final userStatus = _projectStatuses[project.id] ?? 'Tersedia';
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: ProjectCard(
@@ -309,18 +280,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             description: project.description,
                             deadline: project.deadline,
                             participants: project.participants,
-                            status: userStatus, // Show user-specific status
+                            status: userStatus,
                             onTap: () async {
-                              // Navigate to detail and wait for result
                               final shouldRefresh = await Navigator.push<bool>(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ProjectDetailScreen(
-                                    projectId: project.id,
-                                  ),
+                                  builder: (context) => ProjectDetailScreen(projectId: project.id),
                                 ),
                               );
-                              // Refresh status if user registered
                               if (shouldRefresh == true) {
                                 await _loadUserStatusForAllProjects();
                               }
@@ -337,32 +304,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
       ),
+      // ONLY MODIFIED: Bottom nav with badge
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onBottomNavTap,
         items: [
           BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/homeactive.svg',
-              width: 24,
-              height: 24,
-            ),
+            icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 24, height: 24),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/chat.svg',
-              width: 24,
-              height: 24,
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                SvgPicture.asset('assets/logos/chat.svg', width: 24, height: 24),
+                if (totalUnread > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/profileinactive.svg',
-              width: 24,
-              height: 24,
-            ),
+            icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 24, height: 24),
             label: 'Profile',
           ),
         ],
@@ -371,6 +346,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 }
 
+// ORIGINAL WIDGETS - NO CHANGES
 class StudentHeaderCard extends StatelessWidget {
   final String name;
   final String program;
@@ -385,11 +361,11 @@ class StudentHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs = Theme.of(context). colorScheme;
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white. withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.25)),
       ),
@@ -412,10 +388,7 @@ class StudentHeaderCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   program,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: cs.onPrimary.withOpacity(0.9),
-                  ),
+                  style: TextStyle(fontSize: 14, color: cs. onPrimary.withOpacity(0.9)),
                 ),
               ],
             ),
@@ -433,7 +406,7 @@ class ProjectCard extends StatelessWidget {
   final String deadline;
   final String participants;
   final String status;
-  final VoidCallback? onTap;
+  final VoidCallback?  onTap;
 
   const ProjectCard({
     super.key,
@@ -462,12 +435,11 @@ class ProjectCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: cs.surfaceVariant,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius. circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title and status tag
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -479,7 +451,7 @@ class ProjectCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: cs.onSurface,
+                      color: cs. onSurface,
                     ),
                   ),
                 ),
@@ -492,7 +464,7 @@ class ProjectCard extends StatelessWidget {
               description,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+              style: TextStyle(fontSize: 14, color: cs. onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             Row(
@@ -504,7 +476,7 @@ class ProjectCard extends StatelessWidget {
                 ),
                 Text(
                   'Partisipan: $participants',
-                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                  style: TextStyle(fontSize: 12, color: cs. onSurfaceVariant),
                 ),
               ],
             ),
@@ -517,14 +489,14 @@ class ProjectCard extends StatelessWidget {
 
 class StatusTag extends StatelessWidget {
   final String status;
-  const StatusTag({super.key, required this.status});
+  const StatusTag({super. key, required this.status});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E5AAC), // Blue background
+        color: const Color(0xFF2E5AAC),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

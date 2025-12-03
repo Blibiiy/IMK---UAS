@@ -3,74 +3,108 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/portfolio_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/chat_provider.dart'; // NEW
 import '../screens/home_screen.dart';
 import '../screens/chat_list_screen.dart';
 import 'portfolio_detail_screen.dart';
 import 'portfolio_form_screen.dart';
-import '../theme/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super. key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _currentIndex = 2; // Profile tab is selected
-
   @override
   void initState() {
     super.initState();
-    // Load portfolios from Supabase when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId = context.read<UserProvider>().currentUser?.id;
+      final userId = context.read<UserProvider>().currentUser?. id;
       context.read<PortfolioProvider>().loadPortfolios(userId: userId);
+      
+      // Load conversations untuk badge counter
+      if (userId != null) {
+        context. read<ChatProvider>().loadConversations(userId);
+      }
     });
   }
 
-  void _onBottomNavTap(int index) {
-    if (index == 0) {
-      // Navigate to Home
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else if (index == 1) {
-      // Navigate to Chat
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ChatListScreen()),
-      );
-    } else {
-      setState(() {
-        _currentIndex = index;
-      });
-    }
+  // Calculate total unread count
+  int _getTotalUnreadCount() {
+    final conversations = context.watch<ChatProvider>().conversations;
+    return conversations.fold<int>(0, (sum, conv) => sum + conv.unreadCount);
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final userProvider = context.watch<UserProvider>();
-    final currentUser = userProvider.currentUser;
+    final currentUser = userProvider. currentUser;
+    final totalUnread = _getTotalUnreadCount();
 
     return Scaffold(
+      backgroundColor: cs.surface,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header dengan gradient (konsisten dengan HomeScreen)
+            // Header Card (inline, tidak pakai widget terpisah)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
-              decoration: AppTheme.headerDecoration(cs),
-              child: StudentHeaderCard(
-                name: currentUser?.fullName ?? 'User',
-                program: currentUser?.program ?? 'Program Studi',
-                imageUrl:
-                    currentUser?.avatarUrl ??
-                    'https://placehold.co/100x100/E0E0E0/E0E0E0',
+              padding: const EdgeInsets. fromLTRB(16, 50, 16, 24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2E5AAC), Color(0xFF00A8E8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment. bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: currentUser?.avatarUrl != null
+                        ? NetworkImage(currentUser! .avatarUrl!)
+                        : null,
+                    backgroundColor: Colors.white. withOpacity(0.3),
+                    child: currentUser?.avatarUrl == null
+                        ? const Icon(Icons.person, size: 40, color: Colors.white)
+                        : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          currentUser?. fullName ?? 'User',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          currentUser?.program ?? 'Program Studi',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors. white.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
@@ -93,7 +127,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       IconButton(
                         onPressed: () {
-                          // Navigate to Add Portfolio (Create mode)
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -114,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Portfolio List using Consumer
+                  // Portfolio List
                   Consumer<PortfolioProvider>(
                     builder: (context, portfolioProvider, child) {
                       if (portfolioProvider.portfolioItems.isEmpty) {
@@ -132,14 +165,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
                       }
 
-                      return ListView.builder(
+                      return ListView. builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: portfolioProvider.portfolioItems.length,
                         itemBuilder: (context, index) {
                           final item = portfolioProvider.portfolioItems[index];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
+                            padding: const EdgeInsets. only(bottom: 16.0),
                             child: PortfolioCard(item: item),
                           );
                         },
@@ -150,7 +183,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Logout Button
                   GestureDetector(
                     onTap: () {
-                      // Handle logout
                       context.read<UserProvider>().logout();
                       Navigator.pushNamedAndRemoveUntil(
                         context,
@@ -170,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Row(
                         children: [
                           SvgPicture.asset(
-                            'assets/logos/logout.svg',
+                            'assets/logos/logout. svg',
                             width: 24,
                             height: 24,
                           ),
@@ -179,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'Logout',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight. w500,
                               color: cs.onSurface,
                             ),
                           ),
@@ -194,35 +226,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onBottomNavTap,
-        items: [
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/homeinactive.svg',
-              width: 24,
-              height: 24,
+      // Bottom Navigation with Badge (consistent with HomeScreen)
+      bottomNavigationBar: BottomAppBar(
+        color: cs. surfaceVariant,
+        height: 60,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.home_outlined, size: 28),
+              color: cs.onSurfaceVariant,
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                );
+              },
             ),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/chat.svg',
-              width: 24,
-              height: 24,
+            // Chat icon with badge
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline, size: 28),
+                  color: cs.onSurfaceVariant,
+                  onPressed: () {
+                    Navigator. push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                // Badge notifikasi (red dot)
+                if (totalUnread > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: cs.surfaceVariant, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: SvgPicture.asset(
-              'assets/logos/profileactive.svg',
-              width: 24,
-              height: 24,
+            IconButton(
+              icon: const Icon(Icons.person, size: 28),
+              color: cs.primary, // Active state
+              onPressed: () {
+                // Already on profile screen
+              },
             ),
-            label: 'Profile',
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -235,7 +297,6 @@ class PortfolioCard extends StatelessWidget {
   const PortfolioCard({super.key, required this.item});
 
   String _getSubText() {
-    // Use switch on runtimeType to determine the correct sub-text
     switch (item.runtimeType) {
       case ProjectPortfolio:
         final project = item as ProjectPortfolio;
@@ -258,7 +319,7 @@ class PortfolioCard extends StatelessWidget {
         return 'Tanggal Selesai: ${project.deadline}';
       case CertificatePortfolio:
         final certificate = item as CertificatePortfolio;
-        return 'Berlaku: ${certificate.startDate} - ${certificate.endDate}';
+        return 'Berlaku: ${certificate. startDate} - ${certificate.endDate}';
       case OrganizationPortfolio:
         final organization = item as OrganizationPortfolio;
         return 'Masa Jabatan: ${organization.duration}';
@@ -272,7 +333,6 @@ class PortfolioCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
-        // Navigate to detail screen
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -281,15 +341,14 @@ class PortfolioCard extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets. all(16.0),
         decoration: BoxDecoration(
           color: cs.surfaceVariant,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment. start,
           children: [
-            // Title
             Text(
               item.title,
               style: TextStyle(
@@ -299,13 +358,11 @@ class PortfolioCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // Sub text (dynamic based on type)
             Text(
               _getSubText(),
               style: TextStyle(fontSize: 14, color: cs.onSurface),
             ),
             const SizedBox(height: 4),
-            // Extra info (dynamic based on type)
             Text(
               _getExtraInfo(),
               style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),

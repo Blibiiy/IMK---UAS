@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'providers/project_provider.dart';
 import 'providers/portfolio_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/chat_provider.dart'; // NEW
 import 'config/supabase_config.dart';
 
 import 'theme/app_theme.dart';
@@ -30,6 +30,8 @@ import 'screens/chat_detail_screen.dart';
 import 'screens/portfolio_detail_screen.dart';
 import 'screens/portfolio_form_screen.dart';
 import 'screens/student_profile_detail_screen.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +61,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProjectProvider()),
         ChangeNotifierProvider(create: (_) => PortfolioProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()), // NEW
       ],
       child: MaterialApp(
         title: 'UniWork',
