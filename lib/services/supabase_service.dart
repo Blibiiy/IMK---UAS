@@ -7,7 +7,7 @@ class SupabaseService {
   factory SupabaseService() => _instance;
   SupabaseService._internal();
 
-  SupabaseClient get client => Supabase. instance.client;
+  SupabaseClient get client => Supabase.instance.client;
 
   // ============ FILE STORAGE ============
 
@@ -32,7 +32,7 @@ class SupabaseService {
       final allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
       if (!allowedExtensions.contains(fileExtension)) {
         throw Exception(
-          'Format file tidak didukung.  Gunakan PDF atau gambar (JPG, PNG, GIF, WEBP)',
+          'Format file tidak didukung. Gunakan PDF atau gambar (JPG, PNG, GIF, WEBP)',
         );
       }
 
@@ -46,7 +46,7 @@ class SupabaseService {
           );
 
       // Get public URL
-      final publicUrl = client.storage.from(bucket).getPublicUrl(path);
+      final publicUrl = client.storage. from(bucket).getPublicUrl(path);
 
       print('File uploaded successfully: $publicUrl');
       return publicUrl;
@@ -157,7 +157,7 @@ class SupabaseService {
   Future<Map<String, dynamic>?> addProject({
     required String title,
     required String supervisor,
-    required String supervisorId, // NEW
+    required String supervisorId,
     required String description,
     required String deadline,
     required String participants,
@@ -167,10 +167,10 @@ class SupabaseService {
     try {
       final response = await client
           .from(SupabaseConfig.projectsTable)
-          .insert({
+          . insert({
             'title': title,
             'supervisor': supervisor,
-            'supervisor_id': supervisorId, // NEW
+            'supervisor_id': supervisorId,
             'description': description,
             'deadline': deadline,
             'participants': participants,
@@ -179,7 +179,7 @@ class SupabaseService {
             'status': 'tersedia',
           })
           .select()
-          . single();
+          .single();
 
       return response;
     } catch (e) {
@@ -192,7 +192,7 @@ class SupabaseService {
   Future<Map<String, dynamic>?> updateProject({
     required String id,
     String? title,
-    String?  description,
+    String? description,
     String? deadline,
     String? participants,
     List<String>? requirements,
@@ -275,7 +275,7 @@ class SupabaseService {
     }
   }
 
-  /// Update project group chat ID (NEW)
+  /// Update project group chat ID
   Future<void> updateProjectGroupChatId(String projectId, String groupChatId) async {
     try {
       await client
@@ -299,10 +299,10 @@ class SupabaseService {
   }) async {
     try {
       final response = await client
-          .from(SupabaseConfig.applicantsTable)
-          .select()
+          . from(SupabaseConfig. applicantsTable)
+          . select()
           .eq('project_id', projectId)
-          . eq('student_id', studentId)
+          .eq('student_id', studentId)
           .maybeSingle();
 
       return response != null;
@@ -335,6 +335,34 @@ class SupabaseService {
     }
   }
 
+  /// NEW: Get application status for specific user and project
+  Future<Map<String, dynamic>?> getApplicationStatus({
+    required String projectId,
+    required String studentId,
+  }) async {
+    try {
+      print('🔍 Querying application status for project: $projectId, student: $studentId');
+      
+      final response = await client
+          .from(SupabaseConfig.applicantsTable)
+          .select('id, status')
+          .eq('project_id', projectId)
+          .eq('student_id', studentId)
+          .maybeSingle();
+
+      if (response != null) {
+        print('✅ Found application with status: ${response['status']}');
+      } else {
+        print('ℹ️ No application found');
+      }
+
+      return response;
+    } catch (e) {
+      print('❌ Error getting application status: $e');
+      return null;
+    }
+  }
+
   /// Get applicants for a project with user details
   Future<List<Map<String, dynamic>>> getProjectApplicants(
     String projectId,
@@ -352,14 +380,14 @@ class SupabaseService {
       // Get user details for each applicant
       final studentIds = applicants
           .map((a) => a['student_id'] as String)
-          .toList();
+          . toList();
 
       final users = await client
           .from('users')
           .select()
           .inFilter('id', studentIds);
 
-      return List<Map<String, dynamic>>.from(users);
+      return List<Map<String, dynamic>>. from(users);
     } catch (e) {
       print('Error fetching applicants: $e');
       return [];
@@ -371,7 +399,7 @@ class SupabaseService {
     try {
       // Get members
       final members = await client
-          .from(SupabaseConfig.membersTable)
+          . from(SupabaseConfig. membersTable)
           .select('student_id')
           .eq('project_id', projectId);
 
@@ -398,10 +426,12 @@ class SupabaseService {
     required String studentId,
   }) async {
     try {
+      print('✅ Accepting applicant: $studentId for project: $projectId');
+      
       // Update applicant status to 'accepted'
       await client
-          . from(SupabaseConfig. applicantsTable)
-          . update({'status': 'accepted'})
+          .from(SupabaseConfig.applicantsTable)
+          .update({'status': 'accepted'})
           .eq('project_id', projectId)
           .eq('student_id', studentId);
 
@@ -410,25 +440,31 @@ class SupabaseService {
         'project_id': projectId,
         'student_id': studentId,
       });
+      
+      print('✅ Applicant accepted successfully');
     } catch (e) {
-      print('Error accepting applicant: $e');
+      print('❌ Error accepting applicant: $e');
       rethrow;
     }
   }
 
-  /// Reject applicant
+  /// Reject applicant (FIXED)
   Future<void> rejectApplicant({
     required String projectId,
     required String studentId,
   }) async {
     try {
+      print('🚫 Rejecting applicant: $studentId for project: $projectId');
+      
       await client
           .from(SupabaseConfig.applicantsTable)
           .update({'status': 'rejected'})
           . eq('project_id', projectId)
           .eq('student_id', studentId);
+      
+      print('✅ Applicant rejected successfully');
     } catch (e) {
-      print('Error rejecting applicant: $e');
+      print('❌ Error rejecting applicant: $e');
       rethrow;
     }
   }
@@ -589,7 +625,7 @@ class SupabaseService {
             'certificate_file': certificateFile,
           })
           .select()
-          .single();
+          . single();
 
       return response;
     } catch (e) {
@@ -638,7 +674,7 @@ class SupabaseService {
   }) async {
     try {
       final response = await client
-          .from(SupabaseConfig.portfolioProjectsTable)
+          . from(SupabaseConfig. portfolioProjectsTable)
           .update({
             'title': title,
             'lecturer': lecturer,
@@ -725,9 +761,9 @@ class SupabaseService {
   Future<void> deletePortfolioProject(String id) async {
     try {
       await client
-          .from(SupabaseConfig.portfolioProjectsTable)
+          . from(SupabaseConfig. portfolioProjectsTable)
           .delete()
-          . eq('id', id);
+          .eq('id', id);
     } catch (e) {
       print('Error deleting portfolio project: $e');
       rethrow;
@@ -752,7 +788,7 @@ class SupabaseService {
     try {
       await client
           .from(SupabaseConfig.portfolioOrganizationsTable)
-          .delete()
+          . delete()
           .eq('id', id);
     } catch (e) {
       print('Error deleting portfolio organization: $e');

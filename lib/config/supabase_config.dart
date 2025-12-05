@@ -24,7 +24,10 @@ class SupabaseConfig {
   static const String conversationParticipantsTable = 'conversation_participants';
   static const String messagesTable = 'messages';
 
+  
+
   // Storage buckets
   static const String portfoliosBucket = 'portfolios';
   static const String chatAttachmentsBucket = 'chat-attachments';
-} 
+}
+

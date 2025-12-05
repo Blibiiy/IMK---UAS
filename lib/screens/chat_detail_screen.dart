@@ -65,21 +65,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
   void _markAsRead() {
     final userId = context.read<UserProvider>().currentUser?.id;
     if (userId != null) {
-      context.read<ChatProvider>().markAsRead(widget. conversation.id, userId);
-      // Mark all messages as read
+      context.read<ChatProvider>().markAsRead(widget.conversation.id, userId);
       _chatService.markAllMessagesRead(widget.conversation.id, userId);
     }
   }
 
-   void _sendMessage() {
+  void _sendMessage() {
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
 
     final userId = context.read<UserProvider>().currentUser?.id;
     if (userId == null) return;
 
-    // FIX: Tidak perlu add manual ke cache
-    // Biarkan realtime subscription yang handle
     context.read<ChatProvider>().sendMessage(
           widget.conversation.id,
           userId,
@@ -104,9 +101,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance. removeObserver(this);
     _updateOnlineStatus(false);
-    context.read<ChatProvider>().unsubscribeFromMessages(widget.conversation.id);
+    context.read<ChatProvider>().unsubscribeFromMessages(widget. conversation.id);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -116,7 +113,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final currentUserId = context.read<UserProvider>().currentUser?.id ??  '';
-    final messages = context.watch<ChatProvider>().getMessages(widget.conversation. id);
+    final messages = context.watch<ChatProvider>().getMessages(widget.conversation.id);
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -126,7 +123,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
           // Messages List
           Expanded(
             child: messages.isEmpty
-                ? Center(
+                ?  Center(
                     child: Text(
                       'Belum ada pesan',
                       style: TextStyle(
@@ -137,7 +134,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
                   )
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                    padding: const EdgeInsets. symmetric(horizontal: 16.0, vertical: 16),
                     itemCount: messages. length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
@@ -171,7 +168,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
                               message: message,
                               isMe: isMe,
                               currentUserId: currentUserId,
-                              showSenderName: widget.conversation.type == ConversationType.group && !isMe,
+                              showSenderName: widget.conversation.type == ConversationType.group && ! isMe,
                             ),
                         ],
                       );
@@ -190,19 +187,25 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
 
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-        date1.month == date2.month &&
+        date1. month == date2.month &&
         date1.day == date2.day;
   }
 
   Widget _buildDateDivider(DateTime date, ColorScheme cs) {
+    // FIX: Use local time for comparison
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateTime(date.year, date.month, date.day);
+    
     String dateText;
 
-    if (_isSameDay(date, now)) {
+    if (messageDate == today) {
       dateText = 'Hari Ini';
-    } else if (_isSameDay(date, now.subtract(const Duration(days: 1)))) {
+    } else if (messageDate == yesterday) {
       dateText = 'Kemarin';
     } else {
+      // Format dengan locale Indonesia (opsional)
       dateText = DateFormat('dd MMMM yyyy'). format(date);
     }
 
@@ -211,7 +214,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
         decoration: BoxDecoration(
-          color: cs. surfaceVariant,
+          color: cs.surfaceVariant,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -222,7 +225,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
     );
   }
 
-  // NEW: System message widget
   Widget _buildSystemMessage(Message message, ColorScheme cs) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -257,14 +259,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
   }
 }
 
-// Chat Detail AppBar Component
+// ============================================
+// CHAT DETAIL APP BAR
+// ============================================
+
 class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Conversation conversation;
 
-  const ChatDetailAppBar({super. key, required this.conversation});
+  const ChatDetailAppBar({super.key, required this.conversation});
 
   @override
-  Size get preferredSize => const Size. fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -330,14 +335,19 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton(
           icon: Icon(Icons.more_vert, color: cs.onSurface),
-          onPressed: () {},
+          onPressed: () {
+            // TODO: Show more options (mute, clear chat, etc.)
+          },
         ),
       ],
     );
   }
 }
 
-// UPDATED: Chat Bubble with read receipts
+// ============================================
+// CHAT BUBBLE
+// ============================================
+
 class ChatBubble extends StatelessWidget {
   final Message message;
   final bool isMe;
@@ -347,8 +357,8 @@ class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
     required this.message,
-    required this.isMe,
-    required this.currentUserId,
+    required this. isMe,
+    required this. currentUserId,
     this.showSenderName = false,
   });
 
@@ -380,7 +390,7 @@ class ChatBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment. start,
         children: [
           // Sender name for group chats
           if (showSenderName)
@@ -397,7 +407,7 @@ class ChatBubble extends StatelessWidget {
             ),
           // Message bubble
           Align(
-            alignment: isMe ?  Alignment.centerRight : Alignment.centerLeft,
+            alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.7,
@@ -415,14 +425,17 @@ class ChatBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  // Message content
                   Text(
                     message.content,
                     style: TextStyle(fontSize: 14, color: cs.onSurface),
                   ),
                   const SizedBox(height: 4),
+                  // Time and read receipt
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // FIX: Format waktu dengan local time (HH:mm)
                       Text(
                         DateFormat('HH:mm').format(message. createdAt),
                         style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
@@ -443,7 +456,10 @@ class ChatBubble extends StatelessWidget {
   }
 }
 
-// Chat Input Bar Component
+// ============================================
+// CHAT INPUT BAR
+// ============================================
+
 class ChatInputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
@@ -496,7 +512,7 @@ class ChatInputBar extends StatelessWidget {
                 fillColor: cs.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide. none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),

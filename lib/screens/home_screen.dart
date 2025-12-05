@@ -3,14 +3,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/project_provider.dart';
 import '../providers/user_provider.dart';
-import '../providers/chat_provider.dart'; // ONLY NEW IMPORT
+import '../providers/chat_provider.dart';
 import 'project_detail_screen.dart';
 import 'chat_list_screen.dart';
 import 'profile_screen.dart';
 import '../theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super. key});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -30,8 +30,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProjectsAndStatuses();
       
-      // ONLY NEW: Load conversations untuk badge counter
-      final userId = context.read<UserProvider>().currentUser?.id;
+      final userId = context.read<UserProvider>().currentUser?. id;
       if (userId != null) {
         context.read<ChatProvider>().loadConversations(userId);
       }
@@ -96,7 +95,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  // ONLY NEW METHOD: Calculate total unread count
   int _getTotalUnreadCount() {
     final conversations = context.watch<ChatProvider>().conversations;
     return conversations.fold<int>(0, (sum, conv) => sum + conv.unreadCount);
@@ -106,8 +104,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final userProvider = context.watch<UserProvider>();
-    final currentUser = userProvider. currentUser;
-    final totalUnread = _getTotalUnreadCount(); // ONLY NEW
+    final currentUser = userProvider.currentUser;
+    final totalUnread = _getTotalUnreadCount();
 
     return Scaffold(
       body: RefreshIndicator(
@@ -119,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
-                decoration: AppTheme. headerDecoration(cs),
+                decoration: AppTheme.headerDecoration(cs),
                 child: StudentHeaderCard(
                   name: currentUser?.fullName ?? 'User',
                   program: currentUser?.program ?? 'Program Studi',
@@ -141,16 +139,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   decoration: InputDecoration(
                     hintText: 'Cari project...',
                     hintStyle: TextStyle(
-                      color: cs.onSurfaceVariant.withOpacity(0.6),
+                      color: cs.onSurfaceVariant. withOpacity(0.6),
                       fontSize: 14,
                     ),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: cs. onSurfaceVariant,
+                      color: cs.onSurfaceVariant,
                       size: 22,
                     ),
-                    suffixIcon: _searchQuery. isNotEmpty
-                        ? IconButton(
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ?  IconButton(
                             icon: Icon(
                               Icons.clear,
                               color: cs.onSurfaceVariant,
@@ -167,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     filled: true,
                     fillColor: cs.surfaceVariant,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius. circular(16),
                       borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
@@ -201,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       PopupMenuItem<String>(value: 'Tersedia', child: Text('Tersedia')),
                       PopupMenuItem<String>(value: 'Diproses', child: Text('Diproses')),
                       PopupMenuItem<String>(value: 'Diterima', child: Text('Diterima')),
+                      PopupMenuItem<String>(value: 'Ditolak', child: Text('Ditolak')), // ADDED
                       PopupMenuItem<String>(value: 'Selesai', child: Text('Selesai')),
                     ],
                     child: Container(
@@ -245,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
                     if (filteredProjects.isEmpty) {
                       String emptyMessage = 'Tidak ada project';
-                      if (_searchQuery. isNotEmpty && _selectedFilter != 'Semua') {
+                      if (_searchQuery.isNotEmpty && _selectedFilter != 'Semua') {
                         emptyMessage =
                             'Tidak ada project yang cocok dengan "$_searchQuery" untuk kategori $_selectedFilter';
                       } else if (_searchQuery.isNotEmpty) {
@@ -304,20 +303,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
       ),
-      // ONLY MODIFIED: Bottom nav with badge
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onBottomNavTap,
         items: [
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 24, height: 24),
+            icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 28, height: 28),
             label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Stack(
               clipBehavior: Clip.none,
               children: [
-                SvgPicture.asset('assets/logos/chat.svg', width: 24, height: 24),
+                const Icon(Icons.chat_bubble_outline, size: 28),
                 if (totalUnread > 0)
                   Positioned(
                     right: -2,
@@ -337,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 24, height: 24),
+            icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 28, height: 28),
             label: 'Profile',
           ),
         ],
@@ -346,7 +344,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 }
 
-// ORIGINAL WIDGETS - NO CHANGES
 class StudentHeaderCard extends StatelessWidget {
   final String name;
   final String program;
@@ -354,7 +351,7 @@ class StudentHeaderCard extends StatelessWidget {
 
   const StudentHeaderCard({
     super.key,
-    required this.name,
+    required this. name,
     required this.program,
     required this.imageUrl,
   });
@@ -382,7 +379,7 @@ class StudentHeaderCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: cs.onPrimary,
+                    color: cs. onPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -487,16 +484,37 @@ class ProjectCard extends StatelessWidget {
   }
 }
 
+// FIXED: StatusTag dengan warna untuk setiap status
 class StatusTag extends StatelessWidget {
   final String status;
-  const StatusTag({super. key, required this.status});
+  const StatusTag({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
+    Color bgColor;
+    
+    // Determine color based on status
+    switch (status) {
+      case 'Diproses':
+        bgColor = Colors.orange;
+        break;
+      case 'Diterima':
+        bgColor = Colors.green;
+        break;
+      case 'Ditolak':  // ADDED: Red untuk ditolak
+        bgColor = Colors.red;
+        break;
+      case 'Selesai':
+        bgColor = Colors.blue;
+        break;
+      default: // Tersedia
+        bgColor = const Color(0xFF2E5AAC);
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E5AAC),
+        color: bgColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

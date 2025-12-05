@@ -3,10 +3,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../providers/project_provider.dart';
 import '../providers/user_provider.dart';
-import '../providers/chat_provider.dart'; // NEW
+import '../providers/chat_provider.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/success_dialog.dart';
-import 'chat_detail_screen.dart'; // NEW
+import 'chat_detail_screen.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -27,7 +27,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Future<void> _loadUserStatus() async {
-    final userId = context.read<UserProvider>().currentUser?.id;
+    final userId = context.read<UserProvider>().currentUser?. id;
     if (userId == null) {
       setState(() {
         _isLoadingStatus = false;
@@ -65,7 +65,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           description:
               'Tekan "Ya" jika anda yakin untuk mendaftarkan diri ke project, "Tidak" jika tidak ingin',
           onConfirm: () async {
-            // Show loading
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -78,11 +77,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 listen: false,
               ).registerProject(widget.projectId, currentUser.id);
 
-              // Reload user status after successful registration
               await _loadUserStatus();
 
               if (! context.mounted) return;
-              Navigator.pop(context); // Close loading
+              Navigator.pop(context);
 
               showDialog(
                 context: context,
@@ -96,12 +94,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               );
             } catch (e) {
               if (!context.mounted) return;
-              Navigator.pop(context); // Close loading
+              Navigator.pop(context);
 
               String errorMessage = 'Gagal mendaftar ke project';
               final errorString = e.toString();
 
-              if (errorMessage.contains('sudah mendaftar')) {
+              if (errorString.contains('sudah mendaftar')) {
                 errorMessage = 'Anda sudah mendaftar ke project ini sebelumnya';
               } else if (errorString.contains('duplicate key') ||
                   errorString.contains('23505')) {
@@ -109,7 +107,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               } else if (errorString.contains('Exception:')) {
                 final match = RegExp(
                   r'Exception: (. +)',
-                ). firstMatch(errorString);
+                ).firstMatch(errorString);
                 if (match != null) {
                   errorMessage = match.group(1) ?? errorMessage;
                 }
@@ -131,8 +129,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
   }
 
-  // NEW: Handle chat dengan dosen
-    Future<void> _handleChatWithLecturer() async {
+  Future<void> _handleChatWithLecturer() async {
     final currentUser = context.read<UserProvider>().currentUser;
     final project = context.read<ProjectProvider>().getProjectById(widget.projectId);
 
@@ -150,7 +147,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       return;
     }
 
-    // Debug log
     print('🔍 Current user: ${currentUser.id}');
     print('🔍 Project supervisor ID: ${project.supervisorId}');
 
@@ -164,7 +160,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       return;
     }
 
-    // Show loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -172,29 +167,25 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
 
     try {
-      // Get or create private conversation
       final chatProvider = context.read<ChatProvider>();
       final conversationId = await chatProvider.getOrCreatePrivateChat(
         currentUser.id,
         project.supervisorId,
       );
 
-      if (! mounted) return;
-      Navigator.pop(context); // Close loading
+      if (!mounted) return;
+      Navigator.pop(context);
 
       if (conversationId != null) {
-        // Reload conversations to ensure it's in the list
         await chatProvider.loadConversations(currentUser.id);
 
-        if (! mounted) return;
+        if (!mounted) return;
 
-        // Get conversation detail
         final conversation = chatProvider.conversations
             .where((c) => c.id == conversationId)
             .firstOrNull;
 
         if (conversation != null) {
-          // Navigate to chat detail
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -212,7 +203,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Gagal membuat chat. Periksa koneksi dan coba lagi.'),
+            content: Text('Gagal membuat chat.  Periksa koneksi dan coba lagi.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -221,7 +212,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       print('❌ Error in _handleChatWithLecturer: $e');
       
       if (!mounted) return;
-      Navigator.pop(context); // Close loading
+      Navigator.pop(context);
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -233,13 +224,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final project = Provider.of<ProjectProvider>(
       context,
     ).getProjectById(widget.projectId);
+    
     if (project == null) {
       return Scaffold(
         appBar: AppBar(
@@ -256,10 +247,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: SvgPicture.asset(
-            'assets/logos/back.svg',
+            'assets/logos/back. svg',
             width: 24,
             height: 24,
-            colorFilter: ColorFilter.mode(cs.onSurface, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(cs.onSurface, BlendMode. srcIn),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -289,7 +280,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             const SizedBox(height: 4),
             Text(
               'Deadline: ${project.deadline}',
-              style: TextStyle(fontSize: 14, color: cs. onSurfaceVariant),
+              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             Divider(color: cs.outline, thickness: 1),
@@ -326,12 +317,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               'Manfaat Melakukan Project :',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight. bold,
-                color: cs. onSurface,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
               ),
             ),
             const SizedBox(height: 12),
-            ...project.benefits.map(
+            ...project.benefits. map(
               (benefit) => Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(
@@ -345,39 +336,36 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
             ),
             const SizedBox(height: 40),
-            // Hanya tampilkan tombol jika bukan status Selesai
+            // FIXED: Button dengan size yang konsisten
             if (_userStatus != 'Selesai')
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _handleChatWithLecturer, // NEW: Chat dengan dosen
-                      child: const Text('Chat Dosen'),
+                      onPressed: _handleChatWithLecturer,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: cs.onSurface,
+                        side: BorderSide(color: cs.outline, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text(
+                        'Chat Dosen',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight. bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoadingStatus
-                          ? null
-                          : (project.status == ProjectStatus.tersedia &&
-                                  _userStatus == 'Tersedia')
-                              ? () => _showConfirmationDialog(context)
-                              : null,
-                      child: Text(
-                        _isLoadingStatus
-                            ? 'Loading...'
-                            : _userStatus == 'Diproses'
-                                ? 'Diproses'
-                                : _userStatus == 'Diterima'
-                                    ? 'Sudah Diterima'
-                                    : 'Daftar >>',
-                      ),
-                    ),
+                    child: _buildActionButton(context, _userStatus, project),
                   ),
                 ],
               ),
-            // Tampilkan status Selesai jika project sudah selesai
             if (_userStatus == 'Selesai')
               Container(
                 width: double.infinity,
@@ -411,5 +399,92 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         ),
       ),
     );
+  }
+
+  // FIXED: Build action button dengan consistent styling
+  Widget _buildActionButton(BuildContext context, String status, Project project) {
+    final cs = Theme.of(context).colorScheme;
+
+    // Base styling untuk semua button
+    const basePadding = EdgeInsets. symmetric(vertical: 16);
+    const baseTextStyle = TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.bold,
+    );
+    final baseBorderRadius = BorderRadius. circular(8);
+
+    if (status == 'Tersedia') {
+      return ElevatedButton(
+        onPressed: project.status == ProjectStatus.tersedia
+            ? () => _showConfirmationDialog(context)
+            : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: cs.primary,
+          foregroundColor: cs.onPrimary,
+          padding: basePadding,
+          shape: RoundedRectangleBorder(borderRadius: baseBorderRadius),
+        ),
+        child: const Text('Daftar >>', style: baseTextStyle),
+      );
+    } else if (status == 'Diproses') {
+      return Container(
+        padding: basePadding,
+        decoration: BoxDecoration(
+          color: Colors.orange. withOpacity(0.2),
+          borderRadius: baseBorderRadius,
+          border: Border.all(color: Colors.orange, width: 2),
+        ),
+        child: const Center(
+          child: Text(
+            'Diproses',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.orange,
+            ),
+          ),
+        ),
+      );
+    } else if (status == 'Ditolak') {
+      return Container(
+        padding: basePadding,
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.2),
+          borderRadius: baseBorderRadius,
+          border: Border.all(color: Colors.red, width: 2),
+        ),
+        child: const Center(
+          child: Text(
+            'Ditolak',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight. bold,
+              color: Colors. red,
+            ),
+          ),
+        ),
+      );
+    } else if (status == 'Diterima') {
+      return Container(
+        padding: basePadding,
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.2),
+          borderRadius: baseBorderRadius,
+          border: Border.all(color: Colors.green, width: 2),
+        ),
+        child: const Center(
+          child: Text(
+            'Diterima',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

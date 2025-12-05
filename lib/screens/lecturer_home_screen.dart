@@ -89,19 +89,21 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
         child: const Icon(Icons.add),
       ),
       // ONLY MODIFIED: Bottom nav with badge
+// ... (kode sebelumnya sama)
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onBottomNavTap,
         items: [
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 24, height: 24),
+            icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 28, height: 28), // CHANGED: 24 → 28
             label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Stack(
               clipBehavior: Clip.none,
               children: [
-                SvgPicture.asset('assets/logos/chat.svg', width: 24, height: 24),
+                const Icon(Icons.chat_bubble_outline, size: 28), // CHANGED: 24 → 28
                 if (totalUnread > 0)
                   Positioned(
                     right: -2,
@@ -110,7 +112,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: Colors. red,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 1.5),
                       ),
@@ -121,7 +123,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 24, height: 24),
+            icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 28, height: 28), // CHANGED: 24 → 28
             label: 'Profile',
           ),
         ],

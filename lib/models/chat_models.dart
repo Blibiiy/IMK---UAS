@@ -4,12 +4,11 @@ enum ConversationType { private, group }
 
 enum MessageType { text, image, file }
 
-// NEW: Message status enum
 enum MessageStatus {
-  sending,    // Sedang dikirim
-  sent,       // Terkirim (centang 1)
-  delivered,  // Terkirim ke user online (centang 2 abu)
-  read,       // Sudah dibaca (centang 2 biru)
+  sending,
+  sent,
+  delivered,
+  read,
 }
 
 class Message {
@@ -23,9 +22,9 @@ class Message {
   final String? fileUrl;
   final DateTime createdAt;
   final bool isDeleted;
-  final bool isSystemMessage; // NEW
-  final List<String> readBy; // NEW: List user IDs yang sudah baca
-  final List<String> deliveredTo; // NEW: List user IDs yang sudah terima
+  final bool isSystemMessage;
+  final List<String> readBy;
+  final List<String> deliveredTo;
 
   Message({
     required this. id,
@@ -43,22 +42,14 @@ class Message {
     this.deliveredTo = const [],
   });
 
-  // NEW: Get message status untuk sender
   MessageStatus getStatus(String currentUserId, bool isRecipientOnline) {
-    // Jika bukan pesan sendiri, return read
     if (senderId != currentUserId) return MessageStatus.read;
-
-    // Jika sudah dibaca oleh orang lain
     if (readBy.any((id) => id != currentUserId)) {
       return MessageStatus.read;
     }
-
-    // Jika sudah terkirim ke user online
     if (deliveredTo.any((id) => id != currentUserId)) {
       return MessageStatus.delivered;
     }
-
-    // Default: sudah terkirim
     return MessageStatus.sent;
   }
 
@@ -70,7 +61,6 @@ class Message {
       messageType = MessageType.file;
     }
 
-    // Parse readBy and deliveredTo from jsonb
     List<String> readByList = [];
     List<String> deliveredToList = [];
 
@@ -86,6 +76,20 @@ class Message {
       }
     }
 
+    // FIX: Convert UTC to local time
+    DateTime createdAtLocal = DateTime.now();
+    if (json['created_at'] != null) {
+      try {
+        // Parse as UTC then convert to local
+        final utcTime = DateTime.parse(json['created_at']);
+        createdAtLocal = utcTime. toLocal();
+        
+        print('🕐 UTC: $utcTime → Local: $createdAtLocal');
+      } catch (e) {
+        print('⚠️ Error parsing created_at: $e');
+      }
+    }
+
     return Message(
       id: json['id']. toString(),
       conversationId: json['conversation_id'].toString(),
@@ -95,11 +99,9 @@ class Message {
       content: json['content'] ?? '',
       type: messageType,
       fileUrl: json['file_url'],
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
-      isDeleted: json['is_deleted'] ??  false,
-      isSystemMessage: json['is_system_message'] ?? false,
+      createdAt: createdAtLocal, // FIX: Use local time
+      isDeleted: json['is_deleted'] ?? false,
+      isSystemMessage: json['is_system_message'] ??  false,
       readBy: readByList,
       deliveredTo: deliveredToList,
     );
@@ -152,27 +154,46 @@ class Conversation {
         ? ConversationType.group
         : ConversationType.private;
 
+    // FIX: Convert UTC to local time for conversations
+    DateTime createdAtLocal = DateTime.now();
+    if (json['created_at'] != null) {
+      try {
+        final utcTime = DateTime.parse(json['created_at']);
+        createdAtLocal = utcTime.toLocal();
+      } catch (e) {
+        print('⚠️ Error parsing conversation created_at: $e');
+      }
+    }
+
+    DateTime?  lastMessageAtLocal;
+    if (json['last_message_at'] != null) {
+      try {
+        final utcTime = DateTime.parse(json['last_message_at']);
+        lastMessageAtLocal = utcTime.toLocal();
+      } catch (e) {
+        print('⚠️ Error parsing last_message_at: $e');
+      }
+    }
+
     return Conversation(
       id: json['id'].toString(),
       type: convType,
       name: json['name'] ?? 'Unknown',
       avatarUrl: json['avatar_url'],
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
-      lastMessageAt: json['last_message_at'] != null
-          ? DateTime.parse(json['last_message_at'])
-          : null,
+      createdAt: createdAtLocal, // FIX: Use local time
+      lastMessageAt: lastMessageAtLocal, // FIX: Use local time
       lastMessageContent: json['last_message_content'],
       unreadCount: json['unread_count'] ?? 0,
       participantIds: json['participant_ids'] != null
-          ? List<String>.from(json['participant_ids'])
+          ?  List<String>.from(json['participant_ids'])
           : [],
     );
   }
 
   String getTimestamp() {
     if (lastMessageAt == null) return '';
+    
+    // FIX: Use local time for calculation
     final now = DateTime.now();
     final diff = now.difference(lastMessageAt!);
 
@@ -181,6 +202,7 @@ class Conversation {
     if (diff.inHours < 24) return '${diff.inHours}h';
     if (diff.inDays < 7) return '${diff.inDays}d';
 
+    // Format: DD/MM
     return '${lastMessageAt!.day}/${lastMessageAt!.month}';
   }
 }

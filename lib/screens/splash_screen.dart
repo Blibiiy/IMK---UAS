@@ -22,15 +22,39 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs = Theme. of(context).colorScheme;
     return Scaffold(
       body: Container(
         decoration: AppTheme.headerDecoration(cs),
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment. center,
             children: [
-              Image.asset('assets/images/SplashImage.png', width: 200, height: 200),
+              // CHANGED: Logo jadi bulat dengan shadow
+              Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 30,
+                      offset: const Offset(0, 15),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Image.asset(
+                      'assets/images/SplashImage.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
               Text(
                 'UNIWORK',

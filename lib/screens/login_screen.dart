@@ -5,7 +5,7 @@ import '../widgets/custom_login_button.dart';
 import '../providers/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super. key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs = Theme.of(context). colorScheme;
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
@@ -85,10 +85,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       setState(() => _selectedRole = newRole),
                 ),
                 const SizedBox(height: 40),
-                Image.asset(
-                  'assets/images/SplashImage.png',
-                  width: 140,
-                  height: 140,
+                // CHANGED: Logo jadi bulat dengan shadow
+                Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 25,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Image.asset(
+                        'assets/images/SplashImage.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 36),
                 _buildField(
@@ -149,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: Colors.grey[400],
+              color: Colors. grey[400],
               fontWeight: FontWeight.w300,
             ),
           ),

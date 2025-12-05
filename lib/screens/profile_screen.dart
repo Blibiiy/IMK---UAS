@@ -228,13 +228,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       // Bottom Navigation with Badge (consistent with HomeScreen)
       bottomNavigationBar: BottomAppBar(
-        color: cs. surfaceVariant,
+        color: cs.surfaceVariant,
         height: 60,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
-              icon: const Icon(Icons.home_outlined, size: 28),
+              icon: const Icon(Icons.home_outlined, size: 28), // Pastikan 28
               color: cs.onSurfaceVariant,
               onPressed: () {
                 Navigator.pushReplacement(
@@ -243,12 +243,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               },
             ),
-            // Chat icon with badge
             Stack(
               clipBehavior: Clip.none,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline, size: 28),
+                  icon: const Icon(Icons.chat_bubble_outline, size: 28), // Pastikan 28
                   color: cs.onSurfaceVariant,
                   onPressed: () {
                     Navigator. push(
@@ -259,7 +258,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   },
                 ),
-                // Badge notifikasi (red dot)
                 if (totalUnread > 0)
                   Positioned(
                     right: 8,
@@ -277,11 +275,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
             IconButton(
-              icon: const Icon(Icons.person, size: 28),
-              color: cs.primary, // Active state
-              onPressed: () {
-                // Already on profile screen
-              },
+              icon: const Icon(Icons.person, size: 28), // Pastikan 28
+              color: cs.primary,
+              onPressed: () {},
             ),
           ],
         ),

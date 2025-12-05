@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart'; // NEW: For locale initialization
 
 import 'providers/project_provider.dart';
 import 'providers/portfolio_provider.dart';
 import 'providers/user_provider.dart';
-import 'providers/chat_provider.dart'; // NEW
+import 'providers/chat_provider.dart';
 import 'config/supabase_config.dart';
 
 import 'theme/app_theme.dart';
@@ -31,10 +33,18 @@ import 'screens/portfolio_detail_screen.dart';
 import 'screens/portfolio_form_screen.dart';
 import 'screens/student_profile_detail_screen.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // NEW: Initialize date formatting dengan locale Indonesia
+  // Ini opsional - jika ingin format tanggal dalam Bahasa Indonesia
+  try {
+    await initializeDateFormatting('id_ID', null);
+    print('✅ Date formatting initialized (id_ID)');
+  } catch (e) {
+    print('⚠️ Failed to initialize id_ID locale, using default: $e');
+    // Fallback: app tetap jalan dengan locale default (English)
+  }
 
   // Initialize Supabase
   try {
@@ -61,7 +71,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ProjectProvider()),
         ChangeNotifierProvider(create: (_) => PortfolioProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()), // NEW
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp(
         title: 'UniWork',
