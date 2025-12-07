@@ -29,7 +29,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
   @override
   void dispose() {
     _titleController.dispose();
-    _deadlineController. dispose();
+    _deadlineController.dispose();
     _participantsController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -53,47 +53,53 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
     Widget? suffixIcon,
     String? suffixText,
   }) {
+    final cs = Theme.of(context).colorScheme;
     return InputDecoration(
       hintText: hintText,
       hintStyle: TextStyle(
-        color: Colors.grey[400],
-        fontWeight: FontWeight.w300,
+        color: cs.onSurfaceVariant.withOpacity(0.6),
+        fontWeight: FontWeight.w400,
         fontSize: 14,
       ),
       filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      fillColor: cs.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors. black, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.outline, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.outline, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.error, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.error, width: 2),
       ),
       suffixIcon: suffixIcon != null
-          ?  Padding(
-              padding: const EdgeInsets.only(right: 8.0),
+          ? Padding(
+              padding: const EdgeInsets.only(right: 12.0),
               child: suffixIcon,
             )
           : null,
       suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 0),
       suffixText: suffixText,
-      suffixStyle: const TextStyle(
-        color: Colors.black87,
-        fontWeight: FontWeight.w600,
-      ),
+      suffixStyle: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600),
     );
   }
 
   Future<void> _onPost() async {
     if (!_formKey.currentState!.validate()) return;
     if (_requirements.isEmpty) {
-      ScaffoldMessenger. of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Tambahkan minimal 1 persyaratan project'),
         ),
@@ -111,24 +117,25 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
     try {
       // Ambil user yang sedang login
       final currentUser = context.read<UserProvider>().currentUser;
-      final lecturerName = currentUser?.fullName ?? 'Dosen Pembimbing';
-      final lecturerId = currentUser?.id ?? '';
 
-      if (lecturerId.isEmpty) {
-        throw Exception('User ID tidak ditemukan');
+      if (currentUser == null || currentUser.id.isEmpty) {
+        throw Exception('Anda harus login terlebih dahulu');
       }
+
+      final lecturerName = currentUser.fullName;
+      final lecturerId = currentUser.id;
 
       // Pass ChatProvider untuk auto-create group chat
       await context.read<ProjectProvider>().addProject(
-            title: _titleController.text. trim(),
-            deadline: _deadlineController.text.trim(),
-            participants: _participantsController.text.trim(),
-            description: _descriptionController.text. trim(),
-            requirements: _requirements,
-            lecturerFullName: lecturerName,
-            lecturerId: lecturerId, // NEW
-            chatProvider: context.read<ChatProvider>(), // NEW
-          );
+        title: _titleController.text.trim(),
+        deadline: _deadlineController.text.trim(),
+        participants: _participantsController.text.trim(),
+        description: _descriptionController.text.trim(),
+        requirements: _requirements,
+        lecturerFullName: lecturerName,
+        lecturerId: lecturerId, // NEW
+        chatProvider: context.read<ChatProvider>(), // NEW
+      );
 
       // Close loading
       if (mounted) Navigator.of(context).pop();
@@ -139,7 +146,8 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
           context: context,
           barrierDismissible: false,
           builder: (_) => SuccessDialog(
-            message: 'Project Berhasil Di posting !\n\nGrup chat project otomatis dibuat.',
+            message:
+                'Project Berhasil Di posting !\n\nGrup chat project otomatis dibuat.',
             onClose: () {
               // kembali ke dashboard dosen
               Navigator.of(context).pop();
@@ -167,9 +175,10 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Form(
             key: _formKey,
             child: Column(
@@ -190,7 +199,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: cs. onSurface,
+                    color: cs.onSurface,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -230,7 +239,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                     ),
                   ),
                   onTap: _pickDeadline,
-                  validator: (v) => (v == null || v.trim(). isEmpty)
+                  validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Tanggal wajib dipilih'
                       : null,
                 ),
@@ -248,7 +257,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                     hintText: 'Contoh: 5',
                     suffixText: 'Partisipan',
                   ),
-                  keyboardType: TextInputType. number,
+                  keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
@@ -266,7 +275,7 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                 // Persyaratan Project
                 Text(
                   'Persyaratan Project',
-                  style: TextStyle(fontSize: 14, color: cs. onSurfaceVariant),
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 RequirementInputChipField(
@@ -296,27 +305,29 @@ class _LecturerAddProjectScreenState extends State<LecturerAddProjectScreen> {
                       ? 'Detail project wajib diisi'
                       : null,
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
 
                 // Tombol Post
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton(
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
                     onPressed: _onPost,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black, width: 1.5),
+                    icon: const Icon(Icons.send, size: 20),
+                    label: const Text(
+                      'Post Project',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: cs.primary,
+                      foregroundColor: cs.onPrimary,
+                      elevation: 2,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text(
-                      'Post',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),
                 ),
@@ -351,7 +362,7 @@ class _RequirementInputChipFieldState extends State<RequirementInputChipField> {
 
   @override
   void dispose() {
-    _requirementController. dispose();
+    _requirementController.dispose();
     super.dispose();
   }
 
@@ -367,7 +378,7 @@ class _RequirementInputChipFieldState extends State<RequirementInputChipField> {
   }
 
   void _removeRequirement(int index) {
-    final updatedRequirements = [... widget.requirements];
+    final updatedRequirements = [...widget.requirements];
     updatedRequirements.removeAt(index);
     widget.onRequirementsChanged(updatedRequirements);
   }

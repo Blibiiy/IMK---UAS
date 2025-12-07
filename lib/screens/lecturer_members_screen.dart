@@ -53,7 +53,8 @@ class _LecturerMembersScreenState extends State<LecturerMembersScreen> {
                   ),
                   const Spacer(),
                   // Hide Pendaftar button if project is finished
-                  if (project != null && project.status != ProjectStatus.selesai)
+                  if (project != null &&
+                      project.status != ProjectStatus.selesai)
                     ElevatedButton(
                       onPressed: () {
                         Navigator.push(

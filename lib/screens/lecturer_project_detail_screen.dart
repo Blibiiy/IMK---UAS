@@ -154,90 +154,171 @@ class LecturerProjectDetailScreen extends StatelessWidget {
               Text(
                 project.title,
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: cs.onSurface,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
-              // Supervisor
-              Text(
-                project.supervisor,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: cs.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-
-              // Deadline
-              Text(
-                'Deadline: ${project.deadline}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: cs.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-
-              // Diposting
-              Text(
-                'Diposting: $postedFormatted • $postedAgo',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: cs.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (project.editedAt != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  '(Diedit)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: cs.onSurfaceVariant,
-                    fontStyle: FontStyle.italic,
+              // Info Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cs.surfaceVariant.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: cs.outline.withOpacity(0.2),
+                    width: 1,
                   ),
                 ),
-              ],
-
-              const SizedBox(height: 12),
-              Divider(thickness: 1, color: cs.outline),
-              const SizedBox(height: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.person_outline, size: 18, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Dosen: ${project.supervisor}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today, size: 18, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Deadline: ${project.deadline}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time, size: 18, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Diposting: $postedFormatted • $postedAgo',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (project.editedAt != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.edit,
+                            size: 16,
+                            color: cs.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Telah diedit',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
 
               // Persyaratan Project
               Text(
-                'Persyaratan Project :',
+                'Persyaratan Project',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: cs.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
               if (project.requirements.isEmpty)
-                Text(
-                  '-',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: cs.onSurface,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: cs.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tidak ada persyaratan khusus',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 )
               else
                 ...project.requirements.asMap().entries.map(
-                  (e) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      '${e.key + 1}. ${e.value}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.5,
-                        color: cs.onSurface,
-                      ),
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: cs.primaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${entry.key + 1}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: cs.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            entry.value,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -246,9 +327,9 @@ class LecturerProjectDetailScreen extends StatelessWidget {
 
               // Detail Project
               Text(
-                'Detail Project :',
+                'Detail Project',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: cs.onSurface,
                 ),
@@ -258,18 +339,18 @@ class LecturerProjectDetailScreen extends StatelessWidget {
                 project.description,
                 style: TextStyle(
                   fontSize: 14,
-                  height: 1.5,
+                  height: 1.6,
                   color: cs.onSurface,
                 ),
               ),
 
-              const SizedBox(height: 48),
+              const SizedBox(height: 32),
 
-              // Buttons: List Anggota + (conditionally) Tutup Pendaftaran atau Selesaikan Project
+              // Buttons with better design
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: OutlinedButton.icon(
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -279,63 +360,70 @@ class LecturerProjectDetailScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: cs.onSurface,
-                        side: BorderSide(color: cs.outline, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      icon: Icon(
+                        Icons.group_outlined,
+                        size: 20,
+                        color: cs.primary,
                       ),
-                      child: const Text(
+                      label: Text(
                         'List Anggota',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: cs.primary,
                         ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: cs.primary, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   if (isOpen)
                     Expanded(
-                      child: OutlinedButton(
+                      child: ElevatedButton.icon(
                         onPressed: () => _confirmCloseRegistration(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: cs.onSurface,
-                          side: BorderSide(color: cs.outline, width: 1.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
+                        icon: const Icon(Icons.close, size: 20),
+                        label: const Text(
                           'Tutup Pendaftaran',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[700],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),
                     ),
                   if (!isOpen && project.status != ProjectStatus.selesai)
                     Expanded(
-                      child: OutlinedButton(
+                      child: ElevatedButton.icon(
                         onPressed: () => _confirmCompleteProject(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: cs.onSurface,
-                          side: BorderSide(color: cs.outline, width: 1.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
+                        icon: const Icon(Icons.check_circle_outline, size: 20),
+                        label: const Text(
                           'Selesaikan Project',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[700],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),
                     ),

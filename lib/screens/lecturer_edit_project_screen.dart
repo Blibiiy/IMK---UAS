@@ -68,41 +68,46 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
     Widget? suffixIcon,
     String? suffixText,
   }) {
+    final cs = Theme.of(context).colorScheme;
     return InputDecoration(
       hintText: hintText,
-      // Placeholder dengan warna lebih transparan
       hintStyle: TextStyle(
-        color: Colors.grey[400],
-        fontWeight: FontWeight.w300,
+        color: cs.onSurfaceVariant.withOpacity(0.6),
+        fontWeight: FontWeight.w400,
         fontSize: 14,
       ),
       filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      fillColor: cs.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.outline, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.outline, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.error, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: cs.error, width: 2),
       ),
       suffixIcon: suffixIcon != null
           ? Padding(
-              padding: const EdgeInsets.only(right: 8.0),
+              padding: const EdgeInsets.only(right: 12.0),
               child: suffixIcon,
             )
           : null,
       suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 0),
       suffixText: suffixText,
-      suffixStyle: const TextStyle(
-        color: Colors.black87,
-        fontWeight: FontWeight.w600,
-      ),
+      suffixStyle: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600),
     );
   }
 
@@ -241,9 +246,10 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Form(
             key: _formKey,
             child: Column(
@@ -372,44 +378,52 @@ class _LecturerEditProjectScreenState extends State<LecturerEditProjectScreen> {
 
                 // Tombol Update dan Delete
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Tombol Delete
-                    OutlinedButton(
-                      onPressed: _onDelete,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _onDelete,
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        label: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 12,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red[700],
+                          side: BorderSide(color: Colors.red[700]!, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
+                    const SizedBox(width: 16),
                     // Tombol Update
-                    OutlinedButton(
-                      onPressed: _onUpdate,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        side: const BorderSide(color: Colors.black, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: _onUpdate,
+                        icon: const Icon(Icons.check_circle_outline, size: 20),
+                        label: const Text(
+                          'Update Project',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 12,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: cs.primary,
+                          foregroundColor: cs.onPrimary,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                      ),
-                      child: const Text(
-                        'Update',
-                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],

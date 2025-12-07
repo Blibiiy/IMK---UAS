@@ -260,9 +260,10 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -296,31 +297,22 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
                 value: _selectedCategory,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: cs.surface,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 14,
+                    vertical: 16,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Colors.black,
-                      width: 1.5,
-                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: cs.outline, width: 1.5),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Colors.black,
-                      width: 1.5,
-                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: cs.outline, width: 1.5),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Colors.black,
-                      width: 1.5,
-                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: cs.primary, width: 2),
                   ),
                   suffixIcon: Padding(
                     padding: const EdgeInsets.all(12.0),
@@ -353,26 +345,39 @@ class _PortfolioFormScreenState extends State<PortfolioFormScreen> {
               // Render form based on category
               if (_selectedCategory == 'Sertifikat') _buildCertificateForm(),
               if (_selectedCategory == 'Organisasi') _buildOrganizationForm(),
-              const SizedBox(height: 28),
+              const SizedBox(height: 32),
               // Submit Button
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton(
-                  onPressed: _handleSubmit,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(color: Colors.black, width: 1.5),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isUploading ? null : _handleSubmit,
+                  icon: Icon(
+                    isEditing
+                        ? Icons.check_circle_outline
+                        : Icons.add_circle_outline,
+                    size: 20,
+                  ),
+                  label: Text(
+                    _isUploading
+                        ? 'Uploading...'
+                        : isEditing
+                        ? 'Update Portfolio'
+                        : 'Tambah Portfolio',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    disabledBackgroundColor: cs.surfaceVariant,
+                    disabledForegroundColor: cs.onSurfaceVariant,
+                    elevation: 2,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: Text(
-                    isEditing ? 'Update' : 'Tambah',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/portfolio_provider.dart';
 import '../widgets/confirmation_dialog.dart';
 import 'portfolio_form_screen.dart';
@@ -15,64 +16,219 @@ class PortfolioDetailScreen extends StatelessWidget {
     this.isViewOnly = false,
   });
 
-  Widget _buildProjectDetail() {
+  Future<void> _openCertificateFile(BuildContext context, String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tidak dapat membuka file'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Widget _buildProjectDetail(BuildContext context) {
     final project = item as ProjectPortfolio;
+    final cs = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Back button
-        const BackButton(color: Colors.black),
-        const SizedBox(height: 16),
+        IconButton(
+          icon: SvgPicture.asset(
+            'assets/logos/back.svg',
+            width: 24,
+            height: 24,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        const SizedBox(height: 8),
+
         // Title
         Text(
           project.title,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
         ),
-        const SizedBox(height: 8),
-        // Lecturer info
-        Text(
-          'Dosen: ${project.lecturer}',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        const SizedBox(height: 12),
+
+        // Info Card
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cs.surfaceVariant.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cs.outline.withOpacity(0.2), width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.person_outline, size: 18, color: cs.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Dosen: ${project.lecturer}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 18, color: cs.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Selesai: ${project.deadline}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Selesai: ${project.deadline}',
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-        const SizedBox(height: 16),
-        const Divider(),
-        const SizedBox(height: 16),
+
+        const SizedBox(height: 24),
+
         // Description
-        Text(project.description, style: const TextStyle(fontSize: 14)),
-        const SizedBox(height: 16),
-        // Requirements
-        const Text(
-          'Persyaratan Project :',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          'Deskripsi Project',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
+        Text(
+          project.description,
+          style: TextStyle(fontSize: 14, height: 1.6, color: cs.onSurface),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Requirements
+        Text(
+          'Persyaratan Project',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
+        ),
+        const SizedBox(height: 12),
         ...project.requirements.asMap().entries.map((entry) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              '${entry.key + 1}. ${entry.value}',
-              style: const TextStyle(fontSize: 14),
+            padding: const EdgeInsets.only(bottom: 10.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${entry.key + 1}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    entry.value,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         }),
-        const SizedBox(height: 16),
+
+        const SizedBox(height: 24),
+
         // Benefits
-        const Text(
-          'Manfaat Melakukan Project :',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          'Manfaat Melakukan Project',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         ...project.benefits.asMap().entries.map((entry) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              '${entry.key + 1}. ${entry.value}',
-              style: const TextStyle(fontSize: 14),
+            padding: const EdgeInsets.only(bottom: 10.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: cs.secondaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${entry.key + 1}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSecondaryContainer,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    entry.value,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         }),
@@ -82,78 +238,228 @@ class PortfolioDetailScreen extends StatelessWidget {
 
   Widget _buildCertificateDetail(BuildContext context) {
     final certificate = item as CertificatePortfolio;
+    final cs = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Back button
-        const BackButton(color: Colors.black),
-        const SizedBox(height: 16),
+        IconButton(
+          icon: SvgPicture.asset(
+            'assets/logos/back.svg',
+            width: 24,
+            height: 24,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        const SizedBox(height: 8),
+
         // Title
         Text(
           certificate.title,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        // Issuer info
-        Text(
-          'Diterbitkan Oleh: ${certificate.issuer}',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Berlaku: ${certificate.startDate} - ${certificate.endDate}',
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-        const SizedBox(height: 16),
-        const Divider(),
-        const SizedBox(height: 16),
-        // Skills
-        const Text(
-          'Skill Yang Didapatkan :',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        ...certificate.skills.asMap().entries.map((entry) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              '${entry.key + 1}. ${entry.value}',
-              style: const TextStyle(fontSize: 14),
-            ),
-          );
-        }),
-        const SizedBox(height: 16),
-        // Certificate file
-        const Text(
-          'Bukti Sertifikat',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
         ),
         const SizedBox(height: 12),
+
+        // Info Card
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.black, width: 2),
-            borderRadius: BorderRadius.circular(8),
+            color: cs.surfaceVariant.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cs.outline.withOpacity(0.2), width: 1),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SvgPicture.asset('assets/logos/image.svg', width: 20, height: 20),
-              const SizedBox(width: 8),
-              Text(
-                certificate.certificateFile ?? 'No file',
-                style: const TextStyle(fontSize: 14),
+              Row(
+                children: [
+                  Icon(Icons.business, size: 18, color: cs.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Diterbitkan Oleh: ${certificate.issuer}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 18, color: cs.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Berlaku: ${certificate.startDate} - ${certificate.endDate}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
+
+        const SizedBox(height: 24),
+
+        // Skills Section
+        Text(
+          'Skill Yang Didapatkan',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Skills as chips for better visual
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: certificate.skills.map((skill) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: cs.primaryContainer,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: cs.primary.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                skill,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: cs.onPrimaryContainer,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Certificate file section with better design
+        Text(
+          'Bukti Sertifikat',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        if (certificate.certificateFile != null &&
+            certificate.certificateFile!.isNotEmpty)
+          InkWell(
+            onTap: () =>
+                _openCertificateFile(context, certificate.certificateFile!),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cs.primaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: cs.primary.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cs.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      certificate.certificateFile!.toLowerCase().contains(
+                            '.pdf',
+                          )
+                          ? Icons.picture_as_pdf
+                          : Icons.image,
+                      size: 28,
+                      color: cs.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Lihat Sertifikat',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: cs.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          certificate.certificateFile!.toLowerCase().contains(
+                                '.pdf',
+                              )
+                              ? 'File PDF'
+                              : 'File Gambar',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.open_in_new, color: cs.primary, size: 20),
+                ],
+              ),
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cs.surfaceVariant.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: cs.outline.withOpacity(0.3), width: 1),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: cs.onSurfaceVariant),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Tidak ada file yang dilampirkan',
+                    style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                  ),
+                ),
+              ],
+            ),
+          ),
         if (!isViewOnly) ...[
-          const SizedBox(height: 24),
-          // Edit and Delete buttons
+          const SizedBox(height: 32),
+          // Edit and Delete buttons with better design
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: OutlinedButton.icon(
                   onPressed: () {
                     // Navigate to Edit mode
                     Navigator.push(
@@ -164,23 +470,27 @@ class PortfolioDetailScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(color: Colors.black, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
+                  icon: Icon(Icons.edit_outlined, size: 20, color: cs.primary),
+                  label: Text(
                     'Edit',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: cs.primary,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: cs.primary, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   onPressed: () {
                     // Show confirmation dialog
                     showDialog(
@@ -201,17 +511,18 @@ class PortfolioDetailScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  label: const Text(
                     'Delete',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[700],
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
               ),
@@ -224,45 +535,103 @@ class PortfolioDetailScreen extends StatelessWidget {
 
   Widget _buildOrganizationDetail(BuildContext context) {
     final organization = item as OrganizationPortfolio;
+    final cs = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Back button
-        const BackButton(color: Colors.black),
-        const SizedBox(height: 16),
+        IconButton(
+          icon: SvgPicture.asset(
+            'assets/logos/back.svg',
+            width: 24,
+            height: 24,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        const SizedBox(height: 8),
+
         // Title
         Text(
           organization.title,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
         ),
-        const SizedBox(height: 8),
-        // Position info
-        Text(
-          'Posisi: ${organization.position}',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        const SizedBox(height: 12),
+
+        // Info Card
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cs.surfaceVariant.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cs.outline.withOpacity(0.2), width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.work_outline, size: 18, color: cs.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Posisi: ${organization.position}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 18, color: cs.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Masa Jabatan: ${organization.duration}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Masa Jabatan: ${organization.duration}',
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-        const SizedBox(height: 16),
-        const Divider(),
-        const SizedBox(height: 16),
+
+        const SizedBox(height: 24),
+
         // Description/Contributions
-        const Text(
-          'Kegiatan Dan Kontribusi:',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Text(
+          'Kegiatan Dan Kontribusi',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
         ),
-        const SizedBox(height: 8),
-        Text(organization.description, style: const TextStyle(fontSize: 14)),
+        const SizedBox(height: 12),
+        Text(
+          organization.description,
+          style: TextStyle(fontSize: 14, height: 1.6, color: cs.onSurface),
+        ),
         if (!isViewOnly) ...[
-          const SizedBox(height: 24),
-          // Edit and Delete buttons
+          const SizedBox(height: 32),
+          // Edit and Delete buttons with better design
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: OutlinedButton.icon(
                   onPressed: () {
                     // Navigate to Edit mode
                     Navigator.push(
@@ -273,23 +642,27 @@ class PortfolioDetailScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    side: const BorderSide(color: Colors.black, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
+                  icon: Icon(Icons.edit_outlined, size: 20, color: cs.primary),
+                  label: Text(
                     'Edit',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: cs.primary,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: cs.primary, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   onPressed: () {
                     // Show confirmation dialog
                     showDialog(
@@ -310,17 +683,18 @@ class PortfolioDetailScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  label: const Text(
                     'Delete',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[700],
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
               ),
@@ -333,14 +707,14 @@ class PortfolioDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: _buildContent(context),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: _buildContent(context),
         ),
       ),
     );
@@ -350,7 +724,7 @@ class PortfolioDetailScreen extends StatelessWidget {
     // Use switch on runtimeType to determine which layout to render
     switch (item.runtimeType) {
       case ProjectPortfolio:
-        return _buildProjectDetail();
+        return _buildProjectDetail(context);
       case CertificatePortfolio:
         return _buildCertificateDetail(context);
       case OrganizationPortfolio:

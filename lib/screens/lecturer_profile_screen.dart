@@ -227,11 +227,7 @@ class _LecturerProfileScreenState extends State<LecturerProfileScreen> {
                   ),
                   child: Row(
                     children: [
-                      SvgPicture.asset(
-                        'assets/logos/logout.svg',
-                        width: 24,
-                        height: 24,
-                      ),
+                      Icon(Icons.logout, size: 24, color: cs.onSurface),
                       const SizedBox(width: 12),
                       Text(
                         'Logout',

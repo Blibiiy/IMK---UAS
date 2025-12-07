@@ -251,9 +251,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: cs.surface,
+        elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset(
-            'assets/logos/back. svg',
+            'assets/logos/back.svg',
             width: 24,
             height: 24,
             colorFilter: ColorFilter.mode(cs.onSurface, BlendMode.srcIn),
@@ -269,100 +271,153 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             Text(
               project.title,
               style: TextStyle(
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: cs.onSurface,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+
+            // Info Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cs.surfaceVariant.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: cs.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.person_outline, size: 18, color: cs.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Dosen: ${project.supervisor}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 18, color: cs.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Deadline: ${project.deadline}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Deskripsi Project
             Text(
-              project.supervisor,
+              'Deskripsi Project',
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
                 color: cs.onSurface,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Deadline: ${project.deadline}',
-              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            Divider(color: cs.outline, thickness: 1),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               project.description,
-              style: TextStyle(fontSize: 14, height: 1.5, color: cs.onSurface),
+              style: TextStyle(fontSize: 14, height: 1.6, color: cs.onSurface),
             ),
             const SizedBox(height: 24),
             Text(
-              'Persyaratan Project :',
+              'Persyaratan Project',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: cs.onSurface,
               ),
             ),
             const SizedBox(height: 12),
-            ...project.requirements.map(
-              (requirement) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(
-                  requirement,
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: cs.onSurface,
-                  ),
+            ...project.requirements.asMap().entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 10.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${entry.key + 1}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: cs.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        entry.value,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Manfaat Melakukan Project :',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: cs.onSurface,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...project.benefits.map(
-              (benefit) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(
-                  benefit,
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: cs.onSurface,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
-            // FIXED: Button dengan size yang konsisten
+            const SizedBox(height: 32),
+            // Buttons with better design
             if (_userStatus != 'Selesai')
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: OutlinedButton.icon(
                       onPressed: _handleChatWithLecturer,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: cs.onSurface,
-                        side: BorderSide(color: cs.outline, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      icon: Icon(
+                        Icons.chat_outlined,
+                        size: 20,
+                        color: cs.primary,
                       ),
-                      child: const Text(
+                      label: Text(
                         'Chat Dosen',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: cs.primary,
                         ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: cs.primary, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
                   ),
@@ -375,20 +430,27 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             if (_userStatus == 'Selesai')
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2E5AAC),
+                  color: Colors.green[700],
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white, size: 24),
+                    Icon(Icons.check_circle, color: Colors.white, size: 28),
                     SizedBox(width: 12),
                     Text(
                       'Project Selesai',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),

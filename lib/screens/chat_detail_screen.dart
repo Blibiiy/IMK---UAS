@@ -17,7 +17,8 @@ class ChatDetailScreen extends StatefulWidget {
   State<ChatDetailScreen> createState() => _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBindingObserver {
+class _ChatDetailScreenState extends State<ChatDetailScreen>
+    with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatService _chatService = ChatService();
@@ -36,7 +37,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final userId = context.read<UserProvider>().currentUser?. id;
+    final userId = context.read<UserProvider>().currentUser?.id;
     if (userId == null) return;
 
     if (state == AppLifecycleState.resumed) {
@@ -59,7 +60,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
   }
 
   void _subscribeToMessages() {
-    context.read<ChatProvider>().subscribeToMessages(widget.conversation. id);
+    context.read<ChatProvider>().subscribeToMessages(widget.conversation.id);
   }
 
   void _markAsRead() {
@@ -78,10 +79,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
     if (userId == null) return;
 
     context.read<ChatProvider>().sendMessage(
-          widget.conversation.id,
-          userId,
-          content,
-        );
+      widget.conversation.id,
+      userId,
+      content,
+    );
 
     _messageController.clear();
     _scrollToBottom();
@@ -101,9 +102,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
 
   @override
   void dispose() {
-    WidgetsBinding.instance. removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     _updateOnlineStatus(false);
-    context.read<ChatProvider>().unsubscribeFromMessages(widget. conversation.id);
+    context.read<ChatProvider>().unsubscribeFromMessages(
+      widget.conversation.id,
+    );
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -112,8 +115,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final currentUserId = context.read<UserProvider>().currentUser?.id ??  '';
-    final messages = context.watch<ChatProvider>().getMessages(widget.conversation.id);
+    final currentUserId = context.read<UserProvider>().currentUser?.id ?? '';
+    final messages = context.watch<ChatProvider>().getMessages(
+      widget.conversation.id,
+    );
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -123,7 +128,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
           // Messages List
           Expanded(
             child: messages.isEmpty
-                ?  Center(
+                ? Center(
                     child: Text(
                       'Belum ada pesan',
                       style: TextStyle(
@@ -134,8 +139,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
                   )
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets. symmetric(horizontal: 16.0, vertical: 16),
-                    itemCount: messages. length,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 16,
+                    ),
+                    itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
                       final isMe = message.senderId == currentUserId;
@@ -146,20 +154,28 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
                         showDateDivider = true;
                       } else {
                         final prevMessage = messages[index - 1];
-                        if (! _isSameDay(prevMessage.createdAt, message. createdAt)) {
+                        if (!_isSameDay(
+                          prevMessage.createdAt,
+                          message.createdAt,
+                        )) {
                           showDateDivider = true;
                         }
                       }
 
                       // Mark message as delivered when viewed
-                      if (! isMe && ! message.deliveredTo.contains(currentUserId)) {
-                        _chatService.markMessageDelivered(message.id, currentUserId);
+                      if (!isMe &&
+                          !message.deliveredTo.contains(currentUserId)) {
+                        _chatService.markMessageDelivered(
+                          message.id,
+                          currentUserId,
+                        );
                       }
 
                       return Column(
                         children: [
-                          if (showDateDivider) _buildDateDivider(message.createdAt, cs),
-                          
+                          if (showDateDivider)
+                            _buildDateDivider(message.createdAt, cs),
+
                           // System message (notifikasi)
                           if (message.isSystemMessage)
                             _buildSystemMessage(message, cs)
@@ -168,7 +184,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
                               message: message,
                               isMe: isMe,
                               currentUserId: currentUserId,
-                              showSenderName: widget.conversation.type == ConversationType.group && ! isMe,
+                              showSenderName:
+                                  widget.conversation.type ==
+                                      ConversationType.group &&
+                                  !isMe,
                             ),
                         ],
                       );
@@ -176,10 +195,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
                   ),
           ),
           // Chat Input Bar
-          ChatInputBar(
-            controller: _messageController,
-            onSend: _sendMessage,
-          ),
+          ChatInputBar(controller: _messageController, onSend: _sendMessage),
         ],
       ),
     );
@@ -187,7 +203,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
 
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-        date1. month == date2.month &&
+        date1.month == date2.month &&
         date1.day == date2.day;
   }
 
@@ -197,7 +213,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final messageDate = DateTime(date.year, date.month, date.day);
-    
+
     String dateText;
 
     if (messageDate == today) {
@@ -206,7 +222,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
       dateText = 'Kemarin';
     } else {
       // Format dengan locale Indonesia (opsional)
-      dateText = DateFormat('dd MMMM yyyy'). format(date);
+      dateText = DateFormat('dd MMMM yyyy').format(date);
     }
 
     return Padding(
@@ -219,7 +235,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
         ),
         child: Text(
           dateText,
-          style: TextStyle(fontSize: 12, color: cs. onSurface),
+          style: TextStyle(fontSize: 12, color: cs.onSurface),
         ),
       ),
     );
@@ -232,20 +248,24 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> with WidgetsBinding
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           decoration: BoxDecoration(
-            color: cs.secondaryContainer. withOpacity(0.5),
+            color: cs.secondaryContainer.withOpacity(0.5),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.info_outline, size: 16, color: cs.onSecondaryContainer),
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: cs.onSecondaryContainer,
+              ),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   message.content,
                   style: TextStyle(
                     fontSize: 13,
-                    color: cs. onSecondaryContainer,
+                    color: cs.onSecondaryContainer,
                     fontStyle: FontStyle.italic,
                   ),
                   textAlign: TextAlign.center,
@@ -278,7 +298,12 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: cs.surfaceVariant,
       elevation: 0,
       leading: IconButton(
-        icon: SvgPicture.asset('assets/logos/back. svg', width: 24, height: 24),
+        icon: SvgPicture.asset(
+          'assets/logos/back.svg',
+          width: 24,
+          height: 24,
+          colorFilter: ColorFilter.mode(cs.onSurface, BlendMode.srcIn),
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       title: Row(
@@ -293,7 +318,11 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: cs.primary, width: 2),
                   ),
-                  child: Icon(Icons.group_outlined, size: 20, color: cs. primary),
+                  child: Icon(
+                    Icons.group_outlined,
+                    size: 20,
+                    color: cs.primary,
+                  ),
                 )
               : CircleAvatar(
                   radius: 20,
@@ -302,7 +331,7 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
                       : null,
                   backgroundColor: cs.primaryContainer,
                   child: conversation.avatarUrl == null
-                      ?  Icon(Icons.person, size: 20, color: cs.primary)
+                      ? Icon(Icons.person, size: 20, color: cs.primary)
                       : null,
                 ),
           const SizedBox(width: 12),
@@ -317,7 +346,7 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: cs. onSurface,
+                    color: cs.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -325,7 +354,7 @@ class ChatDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
                 if (conversation.type == ConversationType.group)
                   Text(
                     'Grup',
-                    style: TextStyle(fontSize: 12, color: cs. onSurfaceVariant),
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                   ),
               ],
             ),
@@ -357,8 +386,8 @@ class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
     required this.message,
-    required this. isMe,
-    required this. currentUserId,
+    required this.isMe,
+    required this.currentUserId,
     this.showSenderName = false,
   });
 
@@ -369,17 +398,17 @@ class ChatBubble extends StatelessWidget {
       case MessageStatus.sent:
         // Centang 1 (abu-abu)
         return Icon(Icons.check, size: 16, color: cs.onSurfaceVariant);
-      
+
       case MessageStatus.delivered:
         // Centang 2 (abu-abu)
         return Icon(Icons.done_all, size: 16, color: cs.onSurfaceVariant);
-      
+
       case MessageStatus.read:
         // Centang 2 (biru)
         return const Icon(Icons.done_all, size: 16, color: Color(0xFF2E5AAC));
-      
+
       default:
-        return const SizedBox. shrink();
+        return const SizedBox.shrink();
     }
   }
 
@@ -390,7 +419,9 @@ class ChatBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment. start,
+        crossAxisAlignment: isMe
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           // Sender name for group chats
           if (showSenderName)
@@ -412,7 +443,10 @@ class ChatBubble extends StatelessWidget {
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.7,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 10.0,
+              ),
               decoration: BoxDecoration(
                 color: isMe ? cs.primaryContainer : cs.surfaceVariant,
                 borderRadius: BorderRadius.only(
@@ -437,8 +471,11 @@ class ChatBubble extends StatelessWidget {
                     children: [
                       // FIX: Format waktu dengan local time (HH:mm)
                       Text(
-                        DateFormat('HH:mm').format(message. createdAt),
-                        style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
+                        DateFormat('HH:mm').format(message.createdAt),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                       if (isMe) ...[
                         const SizedBox(width: 4),
@@ -466,7 +503,7 @@ class ChatInputBar extends StatelessWidget {
 
   const ChatInputBar({
     super.key,
-    required this. controller,
+    required this.controller,
     required this.onSend,
   });
 
@@ -487,14 +524,16 @@ class ChatInputBar extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: cs.surface,
-              shape: BoxShape. circle,
+              shape: BoxShape.circle,
             ),
             child: IconButton(
               icon: const Icon(Icons.add, size: 24),
               onPressed: () {
                 // TODO: Handle attachment
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Fitur attachment segera hadir')),
+                  const SnackBar(
+                    content: Text('Fitur attachment segera hadir'),
+                  ),
                 );
               },
               padding: EdgeInsets.zero,
@@ -507,14 +546,17 @@ class ChatInputBar extends StatelessWidget {
               controller: controller,
               decoration: InputDecoration(
                 hintText: 'Tulis Pesan...',
-                hintStyle: TextStyle(fontSize: 14, color: cs. onSurfaceVariant),
+                hintStyle: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 filled: true,
                 fillColor: cs.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide. none,
+                  borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
               ),
               onSubmitted: (_) => onSend(),
             ),
