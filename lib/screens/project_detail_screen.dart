@@ -27,7 +27,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Future<void> _loadUserStatus() async {
-    final userId = context.read<UserProvider>().currentUser?. id;
+    final userId = context.read<UserProvider>().currentUser?.id;
     if (userId == null) {
       setState(() {
         _isLoadingStatus = false;
@@ -36,9 +36,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
 
     final status = await context.read<ProjectProvider>().getUserStatusInProject(
-          widget.projectId,
-          userId,
-        );
+      widget.projectId,
+      userId,
+    );
 
     setState(() {
       _userStatus = status;
@@ -79,7 +79,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
               await _loadUserStatus();
 
-              if (! context.mounted) return;
+              if (!context.mounted) return;
               Navigator.pop(context);
 
               showDialog(
@@ -88,7 +88,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 builder: (dialogContext) => SuccessDialog(
                   message: 'Pendaftaran project berhasil dilakukan! ',
                   onClose: () {
-                    Navigator. of(dialogContext).pop();
+                    Navigator.of(dialogContext).pop();
                   },
                 ),
               );
@@ -131,7 +131,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
   Future<void> _handleChatWithLecturer() async {
     final currentUser = context.read<UserProvider>().currentUser;
-    final project = context.read<ProjectProvider>().getProjectById(widget.projectId);
+    final project = context.read<ProjectProvider>().getProjectById(
+      widget.projectId,
+    );
 
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -141,19 +143,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
 
     if (project == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Project tidak ditemukan')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Project tidak ditemukan')));
       return;
     }
 
     print('🔍 Current user: ${currentUser.id}');
     print('🔍 Project supervisor ID: ${project.supervisorId}');
 
-    if (project.supervisorId. isEmpty) {
+    if (project.supervisorId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('ID dosen tidak tersedia.  Pastikan project dibuat dengan benar.'),
+          content: Text(
+            'ID dosen tidak tersedia.  Pastikan project dibuat dengan benar.',
+          ),
           duration: Duration(seconds: 3),
         ),
       );
@@ -203,17 +207,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Gagal membuat chat.  Periksa koneksi dan coba lagi.'),
+            content: Text(
+              'Gagal membuat chat.  Periksa koneksi dan coba lagi.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
       print('❌ Error in _handleChatWithLecturer: $e');
-      
+
       if (!mounted) return;
       Navigator.pop(context);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
@@ -230,7 +236,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final project = Provider.of<ProjectProvider>(
       context,
     ).getProjectById(widget.projectId);
-    
+
     if (project == null) {
       return Scaffold(
         appBar: AppBar(
@@ -250,7 +256,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             'assets/logos/back. svg',
             width: 24,
             height: 24,
-            colorFilter: ColorFilter.mode(cs.onSurface, BlendMode. srcIn),
+            colorFilter: ColorFilter.mode(cs.onSurface, BlendMode.srcIn),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -299,7 +305,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ... project.requirements.map(
+            ...project.requirements.map(
               (requirement) => Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(
@@ -307,7 +313,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
-                    color: cs. onSurface,
+                    color: cs.onSurface,
                   ),
                 ),
               ),
@@ -322,7 +328,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ...project.benefits. map(
+            ...project.benefits.map(
               (benefit) => Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Text(
@@ -355,7 +361,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         'Chat Dosen',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight. bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -377,11 +383,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+                    Icon(Icons.check_circle, color: Colors.white, size: 24),
                     SizedBox(width: 12),
                     Text(
                       'Project Selesai',
@@ -402,16 +404,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   // FIXED: Build action button dengan consistent styling
-  Widget _buildActionButton(BuildContext context, String status, Project project) {
+  Widget _buildActionButton(
+    BuildContext context,
+    String status,
+    Project project,
+  ) {
     final cs = Theme.of(context).colorScheme;
 
     // Base styling untuk semua button
-    const basePadding = EdgeInsets. symmetric(vertical: 16);
-    const baseTextStyle = TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-    );
-    final baseBorderRadius = BorderRadius. circular(8);
+    const basePadding = EdgeInsets.symmetric(vertical: 16);
+    const baseTextStyle = TextStyle(fontSize: 16, fontWeight: FontWeight.bold);
+    final baseBorderRadius = BorderRadius.circular(8);
 
     if (status == 'Tersedia') {
       return ElevatedButton(
@@ -430,7 +433,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       return Container(
         padding: basePadding,
         decoration: BoxDecoration(
-          color: Colors.orange. withOpacity(0.2),
+          color: Colors.orange.withOpacity(0.2),
           borderRadius: baseBorderRadius,
           border: Border.all(color: Colors.orange, width: 2),
         ),
@@ -458,8 +461,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             'Ditolak',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight. bold,
-              color: Colors. red,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
             ),
           ),
         ),

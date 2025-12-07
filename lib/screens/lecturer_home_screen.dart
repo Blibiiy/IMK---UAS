@@ -12,7 +12,7 @@ import 'lecturer_add_project_screen.dart';
 import '../theme/app_theme.dart';
 
 class LecturerHomeScreen extends StatefulWidget {
-  const LecturerHomeScreen({super. key});
+  const LecturerHomeScreen({super.key});
 
   @override
   State<LecturerHomeScreen> createState() => _LecturerHomeScreenState();
@@ -29,7 +29,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectProvider>().loadProjects();
-      
+
       // ONLY NEW: Load conversations untuk badge counter
       final userId = context.read<UserProvider>().currentUser?.id;
       if (userId != null) {
@@ -70,7 +70,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
 
   // ONLY NEW METHOD: Calculate total unread count
   int _getTotalUnreadCount() {
-    final conversations = context. watch<ChatProvider>().conversations;
+    final conversations = context.watch<ChatProvider>().conversations;
     return conversations.fold<int>(0, (sum, conv) => sum + conv.unreadCount);
   }
 
@@ -88,22 +88,29 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
         foregroundColor: cs.onSecondary,
         child: const Icon(Icons.add),
       ),
-      // ONLY MODIFIED: Bottom nav with badge
-// ... (kode sebelumnya sama)
 
+      // ONLY MODIFIED: Bottom nav with badge
+      // ... (kode sebelumnya sama)
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onBottomNavTap,
         items: [
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/homeactive.svg', width: 28, height: 28), // CHANGED: 24 → 28
+            icon: SvgPicture.asset(
+              'assets/logos/homeactive.svg',
+              width: 28,
+              height: 28,
+            ), // CHANGED: 24 → 28
             label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Stack(
               clipBehavior: Clip.none,
               children: [
-                const Icon(Icons.chat_bubble_outline, size: 28), // CHANGED: 24 → 28
+                const Icon(
+                  Icons.chat_bubble_outline,
+                  size: 28,
+                ), // CHANGED: 24 → 28
                 if (totalUnread > 0)
                   Positioned(
                     right: -2,
@@ -112,7 +119,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: Colors. red,
+                        color: Colors.red,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 1.5),
                       ),
@@ -123,7 +130,11 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: SvgPicture.asset('assets/logos/profileinactive.svg', width: 28, height: 28), // CHANGED: 24 → 28
+            icon: SvgPicture.asset(
+              'assets/logos/profileinactive.svg',
+              width: 28,
+              height: 28,
+            ), // CHANGED: 24 → 28
             label: 'Profile',
           ),
         ],
@@ -135,7 +146,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 50, 16, 16),
-              decoration: AppTheme. headerDecoration(cs),
+              decoration: AppTheme.headerDecoration(cs),
               child: _LecturerHeaderCard(
                 name: currentUser?.fullName ?? 'Dosen',
                 program: currentUser?.role == 'dosen'
@@ -154,7 +165,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                 controller: _searchController,
                 onChanged: (value) {
                   setState(() {
-                    _searchQuery = value. toLowerCase();
+                    _searchQuery = value.toLowerCase();
                   });
                 },
                 decoration: InputDecoration(
@@ -191,7 +202,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide. none,
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -225,13 +236,24 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                       });
                     },
                     itemBuilder: (BuildContext context) => const [
-                      PopupMenuItem<String>(value: 'Semua', child: Text('Semua')),
-                      PopupMenuItem<String>(value: 'Pendaftaran', child: Text('Pendaftaran')),
-                      PopupMenuItem<String>(value: 'Proses', child: Text('Proses')),
-                      PopupMenuItem<String>(value: 'Selesai', child: Text('Selesai')),
+                      PopupMenuItem<String>(
+                        value: 'Semua',
+                        child: Text('Semua'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Pendaftaran',
+                        child: Text('Pendaftaran'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'Proses',
+                        child: Text('Proses'),
+                      ),
                     ],
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
                       decoration: BoxDecoration(
                         color: cs.secondaryContainer,
                         borderRadius: BorderRadius.circular(20),
@@ -244,11 +266,15 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: cs. onSecondaryContainer,
+                              color: cs.onSecondaryContainer,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.filter_list, size: 20, color: cs.onSecondaryContainer),
+                          Icon(
+                            Icons.filter_list,
+                            size: 20,
+                            color: cs.onSecondaryContainer,
+                          ),
                         ],
                       ),
                     ),
@@ -262,14 +288,19 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
               child: Consumer<ProjectProvider>(
                 builder: (context, provider, _) {
                   final lecturerName = currentUser?.fullName ?? '';
-                  final allProjects = provider.getProjectsByLecturer(lecturerName);
+                  final allProjects = provider.getProjectsByLecturer(
+                    lecturerName,
+                  );
 
-                  final filteredProjects = allProjects. where((project) {
+                  // Exclude finished projects (only show in History)
+                  final activeProjects = allProjects
+                      .where((p) => p.status != ProjectStatus.selesai)
+                      .toList();
+
+                  final filteredProjects = activeProjects.where((project) {
                     String tag;
                     if (project.status == ProjectStatus.tersedia) {
                       tag = 'Pendaftaran';
-                    } else if (project.status == ProjectStatus.selesai) {
-                      tag = 'Selesai';
                     } else {
                       tag = 'Proses';
                     }
@@ -298,7 +329,10 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                       child: Text(
                         emptyMessage,
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, color: cs. onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     );
                   }
@@ -311,8 +345,6 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                       String tag;
                       if (p.status == ProjectStatus.tersedia) {
                         tag = 'Pendaftaran';
-                      } else if (p.status == ProjectStatus.selesai) {
-                        tag = 'Selesai';
                       } else {
                         tag = 'Proses';
                       }
@@ -323,7 +355,7 @@ class _LecturerHomeScreenState extends State<LecturerHomeScreen> {
                           title: p.title,
                           description: p.description,
                           deadline: p.deadline,
-                          participants: p. participants,
+                          participants: p.participants,
                           tagLabel: tag,
                         ),
                       );
@@ -349,18 +381,18 @@ class _LecturerHeaderCard extends StatelessWidget {
   const _LecturerHeaderCard({
     required this.name,
     required this.program,
-    required this. imageUrl,
+    required this.imageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context). colorScheme;
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white. withOpacity(0.08),
+        color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white. withOpacity(0.25)),
+        border: Border.all(color: Colors.white.withOpacity(0.25)),
       ),
       child: Row(
         children: [
@@ -381,7 +413,10 @@ class _LecturerHeaderCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   program,
-                  style: TextStyle(fontSize: 14, color: cs. onPrimary.withOpacity(0.9)),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: cs.onPrimary.withOpacity(0.9),
+                  ),
                 ),
               ],
             ),
@@ -403,7 +438,7 @@ class _LecturerProjectCard extends StatelessWidget {
   const _LecturerProjectCard({
     required this.projectId,
     required this.title,
-    required this. description,
+    required this.description,
     required this.deadline,
     required this.participants,
     required this.tagLabel,
@@ -411,7 +446,7 @@ class _LecturerProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme. of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -423,7 +458,7 @@ class _LecturerProjectCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: cs.surfaceVariant,
-          borderRadius: BorderRadius. circular(16),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,7 +499,7 @@ class _LecturerProjectCard extends StatelessWidget {
                 ),
                 Text(
                   'Partisipan: $participants',
-                  style: TextStyle(fontSize: 12, color: cs. onSurfaceVariant),
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                 ),
               ],
             ),
